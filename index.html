@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<!-- saved from url=(0042)file:///C:/Users/Lenovo/Desktop/index.html -->
+<html lang="ru"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShitRat - Мессенджер</title>
+    <style>
+        :root {
+            --bg: #1a1b1e;
+            --surface: #2d2e33;
+            --surface2: #36373d;
+            --text: #e0e0e0;
+            --text2: #9e9e9e;
+            --accent: #7289da;
+            --accent-hover: #5b6eae;
+            --green: #43b581;
+            --red: #f04747;
+            --yellow: #faa61a;
+            --border: #40444b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes msgIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        #loginScreen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #1a1b1e 0%, #2d2e33 50%, #1a1b1e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.5s;
+        }
+
+        .login-box {
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 20px;
+            width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: slideIn 0.5s;
+        }
+
+        .login-box .logo { font-size: 50px; margin-bottom: 10px; }
+        .login-box h1 { font-size: 28px; color: var(--accent); margin-bottom: 5px; }
+        .login-box p { color: var(--text2); margin-bottom: 25px; font-size: 13px; }
+
+        .login-input {
+            width: 100%;
+            padding: 13px 15px;
+            margin: 8px 0;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .login-input:focus { border-color: var(--accent); }
+
+        .login-btn {
+            width: 100%;
+            padding: 13px;
+            margin-top: 12px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .login-btn:hover { background: var(--accent-hover); transform: translateY(-2px); }
+        .login-btn.secondary { background: var(--surface2); color: var(--text); margin-top: 8px; }
+
+        #appScreen { display: none; width: 100%; height: 100%; }
+
+        .sidebar {
+            width: 280px;
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .server-header {
+            padding: 18px;
+            background: var(--surface2);
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .server-header h2 { font-size: 20px; color: var(--accent); }
+        .server-header small { color: var(--text2); font-size: 11px; }
+
+        .user-panel {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .status-dot {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--green);
+            border: 2px solid var(--bg);
+        }
+
+        .user-info { flex: 1; }
+        .user-name { font-weight: bold; font-size: 13px; }
+        .user-role { font-size: 10px; color: var(--yellow); text-transform: uppercase; }
+        .user-status-text { font-size: 11px; color: var(--green); }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text2);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .icon-btn:hover { background: var(--surface2); color: var(--text); }
+
+        .search-container { padding: 10px 15px; border-bottom: 1px solid var(--border); }
+
+        .search-input {
+            width: 100%;
+            padding: 9px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text);
+            outline: none;
+            font-size: 13px;
+        }
+
+        .chat-list { flex: 1; overflow-y: auto; padding: 8px; }
+        .chat-list::-webkit-scrollbar { width: 4px; }
+        .chat-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        .chat-item {
+            padding: 10px 12px;
+            margin: 2px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.2s;
+        }
+
+        .chat-item:hover { background: var(--surface2); }
+        .chat-item.active { background: var(--accent); }
+
+        .chat-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .chat-details { flex: 1; min-width: 0; }
+        .chat-name { font-weight: bold; font-size: 13px; }
+        .chat-preview { font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .add-btn {
+            margin: 10px;
+            padding: 11px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: 0.3s;
+        }
+        .add-btn:hover { background: var(--accent-hover); }
+
+        .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+        .chat-header {
+            padding: 12px 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 55px;
+        }
+
+        .chat-title { font-size: 16px; font-weight: bold; flex: 1; }
+
+        .header-btn {
+            padding: 7px 12px;
+            background: var(--surface2);
+            border: none;
+            border-radius: 6px;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+        .header-btn:hover { background: var(--accent); }
+        .header-btn.admin-btn { background: var(--yellow); color: #000; font-weight: bold; }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 10px 14px;
+            background: var(--surface);
+            border-radius: 15px 15px 15px 5px;
+            position: relative;
+            animation: msgIn 0.3s;
+            align-self: flex-start;
+            cursor: pointer;
+        }
+        .message.own {
+            background: var(--accent);
+            border-radius: 15px 15px 5px 15px;
+            align-self: flex-end;
+        }
+
+        .message-header { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+        .message-author { font-weight: bold; font-size: 12px; color: var(--accent); }
+        .message.own .message-author { color: #fff; }
+        .message-time { font-size: 10px; color: var(--text2); }
+        .message.own .message-time { color: rgba(255,255,255,0.6); }
+        .message-text { word-wrap: break-word; line-height: 1.45; font-size: 13px; }
+
+        .message-image {
+            max-width: 220px;
+            max-height: 220px;
+            border-radius: 8px;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+
+        .message-actions {
+            position: absolute;
+            top: -25px;
+            right: 0;
+            display: none;
+            gap: 3px;
+            background: var(--surface2);
+            padding: 4px;
+            border-radius: 6px;
+        }
+        .message:hover .message-actions { display: flex; }
+
+        .msg-action {
+            background: none;
+            border: none;
+            color: var(--text2);
+            cursor: pointer;
+            padding: 3px 7px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .msg-action:hover { background: var(--surface); color: var(--text); }
+
+        .input-area {
+            padding: 12px 20px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+        }
+        .input-wrapper { display: flex; gap: 8px; align-items: flex-end; }
+
+        .attach-btn {
+            padding: 11px;
+            background: var(--surface2);
+            border: none;
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 17px;
+        }
+        .attach-btn:hover { background: var(--accent); }
+
+        .message-input {
+            flex: 1;
+            padding: 11px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            resize: none;
+            min-height: 42px;
+            max-height: 120px;
+            outline: none;
+            font-size: 13px;
+        }
+        .message-input:focus { border-color: var(--accent); }
+
+        .send-btn {
+            padding: 11px 22px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        .send-btn:hover { background: var(--accent-hover); }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.show { display: flex; animation: fadeIn 0.2s; }
+        .modal-content {
+            background: var(--surface);
+            padding: 25px 30px;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90%;
+            animation: slideIn 0.3s;
+        }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .modal-title { font-size: 18px; font-weight: bold; }
+        .modal-close { background: none; border: none; color: var(--text2); font-size: 22px; cursor: pointer; }
+
+        .modal-input {
+            width: 100%;
+            padding: 11px 14px;
+            margin: 8px 0;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            outline: none;
+            font-size: 13px;
+        }
+        .modal-btn {
+            width: 100%;
+            padding: 11px;
+            margin-top: 8px;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .modal-btn.secondary { background: var(--surface2); color: var(--text); }
+
+        .admin-panel {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 500;
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .admin-panel.show { display: flex; }
+
+        .admin-sidebar {
+            width: 200px;
+            background: var(--surface);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .admin-nav {
+            padding: 11px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .admin-nav:hover { background: var(--surface2); }
+        .admin-nav.active { background: var(--accent); font-weight: bold; }
+        .admin-content { flex: 1; padding: 25px; overflow-y: auto; }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 18px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 8px;
+            display: inline-block;
+            min-width: 150px;
+        }
+        .stat-value { font-size: 26px; font-weight: bold; color: var(--accent); }
+        .stat-label { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+        .admin-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 8px; overflow: hidden; }
+        .admin-table th { background: var(--surface2); padding: 12px; text-align: left; font-size: 12px; }
+        .admin-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .admin-table tr:hover { background: var(--surface2); }
+
+        .toast-container { position: fixed; top: 15px; right: 15px; z-index: 2000; }
+        .toast {
+            padding: 13px 18px;
+            background: var(--surface);
+            border-radius: 8px;
+            animation: toastIn 0.3s;
+            margin-bottom: 8px;
+            font-size: 13px;
+            border-left: 4px solid var(--accent);
+            min-width: 250px;
+        }
+        .toast.success { border-left-color: var(--green); }
+        .toast.error { border-left-color: var(--red); }
+    </style>
+</head>
+<body>
+    <div id="loginScreen" style="display: none;">
+        <div class="login-box">
+            <div class="logo">🐀</div>
+            <h1>ShitRat</h1>
+            <p>Крысиное королевство общения</p>
+            <input type="text" id="loginUser" class="login-input" placeholder="Имя пользователя">
+            <input type="password" id="loginPass" class="login-input" placeholder="Пароль">
+            <button class="login-btn" onclick="login()">Войти</button>
+            <button class="login-btn secondary" onclick="register()">Создать аккаунт</button>
+            <p style="margin-top:15px;font-size:11px;color:var(--text2)">Создатель: ShitRat_Creator 👑</p>
+        </div>
+    </div>
+
+    <div id="appScreen" style="display: flex;">
+        <div class="sidebar">
+            <div class="server-header" onclick="showAdminPanel()">
+                <h2>🐀 ShitRat</h2>
+                <small>Нажми для админ-панели</small>
+            </div>
+            <div class="user-panel">
+                <div class="user-avatar" id="userEmoji">👑<div class="status-dot"></div></div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">ShitRat_Creator</div>
+                    <div class="user-role" id="userRole">СОЗДАТЕЛЬ 👑</div>
+                    <div class="user-status-text">Онлайн</div>
+                </div>
+                <button class="icon-btn" onclick="logout()">🚪</button>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Поиск..." oninput="searchChats(this.value)">
+            </div>
+            <div class="chat-list" id="chatList"><div class="chat-item">
+                    <div class="chat-icon">👥</div>
+                    <div class="chat-details">
+                        <div class="chat-name">Общий чат</div>
+                        <div class="chat-preview">Добро пожаловать в ShitRat! 🐀</div>
+                    </div>
+                </div></div>
+            <button class="add-btn" onclick="showCreateChat()">➕ Создать чат</button>
+        </div>
+
+        <div class="main-area">
+            <div class="chat-header">
+                <div class="chat-title" id="chatTitle">Общий чат</div>
+                <button class="header-btn admin-btn" id="adminBtn" onclick="showAdminPanel()" style="display: inline-block;">👑 Админ</button>
+            </div>
+            <div class="messages-area" id="messagesArea"><div class="message own">
+                    <div class="message-header">
+                        <span class="message-author">ShitRat_Creator</span>
+                        <span class="message-time">16:08</span>
+                    </div>
+                    <div class="message-text">Добро пожаловать в ShitRat! 🐀</div>
+                    
+                    <div class="message-actions">
+                        <button class="msg-action" onclick="deleteMessage(&#39;1788613711802&#39;)">🗑️</button>
+                    </div>
+                </div></div>
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <button class="attach-btn" onclick="document.getElementById(&#39;imageInput&#39;).click()">📎</button>
+                    <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="sendImage()">
+                    <textarea class="message-input" id="messageInput" placeholder="Написать сообщение..." rows="1" onkeydown="handleKey(event)"></textarea>
+                    <button class="send-btn" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-sidebar">
+            <h3 style="margin-bottom:15px;color:var(--yellow)">👑 Админ</h3>
+            <div class="admin-nav active" onclick="showAdminStats()">📊 Статистика</div>
+            <div class="admin-nav" onclick="showAdminUsers()">👥 Пользователи</div>
+            <div class="admin-nav" onclick="showAdminChats()">💬 Чаты</div>
+            <button class="modal-btn secondary" style="margin-top:auto" onclick="closeAdminPanel()">← Назад</button>
+        </div>
+        <div class="admin-content" id="adminContent"></div>
+    </div>
+
+    <div class="modal" id="createChatModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Создать чат</div>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <input type="text" class="modal-input" id="newChatName" placeholder="Название чата">
+            <button class="modal-btn" onclick="createChat()">Создать</button>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        let users = JSON.parse(localStorage.getItem('sr_users') || '[]');
+        let chats = JSON.parse(localStorage.getItem('sr_chats') || '[]');
+        let messages = JSON.parse(localStorage.getItem('sr_messages') || '{}');
+        let currentUser = null;
+        let currentChatId = null;
+        let pendingImage = null;
+
+        function init() {
+            if (!users.find(u => u.username === 'ShitRat_Creator')) {
+                users.push({
+                    id: 'creator',
+                    username: 'ShitRat_Creator',
+                    password: 'ShitRat2024!',
+                    emoji: '👑',
+                    role: 'CREATOR'
+                });
+                localStorage.setItem('sr_users', JSON.stringify(users));
+            }
+            if (chats.length === 0) {
+                chats.push({ id: 'general', name: 'Общий чат', type: 'group', creator: 'creator' });
+                messages['general'] = [{
+                    id: Date.now(),
+                    author: 'ShitRat_Creator',
+                    text: 'Добро пожаловать в ShitRat! 🐀',
+                    timestamp: Date.now(),
+                    type: 'text'
+                }];
+                localStorage.setItem('sr_chats', JSON.stringify(chats));
+                localStorage.setItem('sr_messages', JSON.stringify(messages));
+            }
+            // auto login if saved
+            const saved = localStorage.getItem('sr_current_user');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                showApp();
+            }
+        }
+
+        function saveUsers() { localStorage.setItem('sr_users', JSON.stringify(users)); }
+        function saveChats() { localStorage.setItem('sr_chats', JSON.stringify(chats)); }
+        function saveMessages() { localStorage.setItem('sr_messages', JSON.stringify(messages)); }
+
+        function showToast(text, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = text;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function register() {
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value;
+            if (!username || !password) { showToast('Введите имя и пароль', 'error'); return; }
+            if (users.find(u => u.username === username)) { showToast('Пользователь уже существует', 'error'); return; }
+            const newUser = {
+                id: 'user_' + Date.now(),
+                username,
+                password,
+                emoji: '🐀',
+                role: 'USER'
+            };
+            users.push(newUser);
+            saveUsers();
+            currentUser = newUser;
+            localStorage.setItem('sr_current_user', JSON.stringify(newUser));
+            showApp();
+            showToast('Аккаунт создан', 'success');
+        }
+
+        function login() {
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value;
+            const user = users.find(u => u.username === username && u.password === password);
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('sr_current_user', JSON.stringify(user));
+                showApp();
+            } else {
+                showToast('Неверные данные', 'error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('sr_current_user');
+            currentUser = null;
+            currentChatId = null;
+            document.getElementById('appScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'flex';
+            document.getElementById('userName').textContent = currentUser.username;
+            document.getElementById('userEmoji').innerHTML = currentUser.emoji + '<div class="status-dot"></div>';
+            const roleEl = document.getElementById('userRole');
+            if (currentUser.role === 'CREATOR') {
+                roleEl.textContent = 'СОЗДАТЕЛЬ 👑';
+                document.getElementById('adminBtn').style.display = 'inline-block';
+            } else {
+                roleEl.textContent = 'ПОЛЬЗОВАТЕЛЬ';
+                document.getElementById('adminBtn').style.display = 'none';
+            }
+            renderChatList();
+            if (currentChatId) selectChat(currentChatId);
+        }
+
+        function renderChatList() {
+            const list = document.getElementById('chatList');
+            list.innerHTML = '';
+            chats.forEach(chat => {
+                const item = document.createElement('div');
+                item.className = 'chat-item' + (chat.id === currentChatId ? ' active' : '');
+                const lastMsg = messages[chat.id]?.slice(-1)[0];
+                const preview = lastMsg ? lastMsg.text : 'Нет сообщений';
+                item.innerHTML = `
+                    <div class="chat-icon">👥</div>
+                    <div class="chat-details">
+                        <div class="chat-name">${chat.name}</div>
+                        <div class="chat-preview">${preview}</div>
+                    </div>
+                `;
+                item.onclick = () => selectChat(chat.id);
+                list.appendChild(item);
+            });
+        }
+
+        function selectChat(chatId) {
+            currentChatId = chatId;
+            const chat = chats.find(c => c.id === chatId);
+            if (!chat) return;
+            document.getElementById('chatTitle').textContent = chat.name;
+            renderChatList();
+            renderMessages();
+        }
+
+        function renderMessages() {
+            const area = document.getElementById('messagesArea');
+            area.innerHTML = '';
+            if (!currentChatId) return;
+            const msgs = messages[currentChatId] || [];
+            msgs.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'message' + (msg.author === currentUser.username ? ' own' : '');
+                const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
+                let content = '';
+                if (msg.type === 'image') {
+                    content = `<img src="${msg.image}" class="message-image" onclick="window.open(this.src)">`;
+                } else {
+                    content = `<div class="message-text">${msg.text}</div>`;
+                }
+                div.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-author">${msg.author}</span>
+                        <span class="message-time">${time}</span>
+                    </div>
+                    ${content}
+                    ${msg.author === currentUser.username ? `
+                    <div class="message-actions">
+                        <button class="msg-action" onclick="deleteMessage('${msg.id}')">🗑️</button>
+                    </div>` : ''}
+                `;
+                area.appendChild(div);
+            });
+            area.scrollTop = area.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || !currentChatId) return;
+            const msg = {
+                id: 'msg_' + Date.now(),
+                author: currentUser.username,
+                text,
+                timestamp: Date.now(),
+                type: 'text'
+            };
+            if (!messages[currentChatId]) messages[currentChatId] = [];
+            messages[currentChatId].push(msg);
+            saveMessages();
+            input.value = '';
+            renderMessages();
+            renderChatList();
+        }
+
+        function handleKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function deleteMessage(msgId) {
+            if (!currentChatId) return;
+            messages[currentChatId] = messages[currentChatId].filter(m => m.id !== msgId);
+            saveMessages();
+            renderMessages();
+            renderChatList();
+        }
+
+        function sendImage() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            if (!file || !currentChatId) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const msg = {
+                    id: 'msg_' + Date.now(),
+                    author: currentUser.username,
+                    text: '📷 Изображение',
+                    timestamp: Date.now(),
+                    type: 'image',
+                    image: e.target.result
+                };
+                if (!messages[currentChatId]) messages[currentChatId] = [];
+                messages[currentChatId].push(msg);
+                saveMessages();
+                renderMessages();
+                renderChatList();
+                showToast('Изображение отправлено', 'success');
+                fileInput.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showCreateChat() {
+            document.getElementById('createChatModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('createChatModal').classList.remove('show');
+        }
+
+        function createChat() {
+            const name = document.getElementById('newChatName').value.trim();
+            if (!name) { showToast('Введите название', 'error'); return; }
+            const newChat = {
+                id: 'chat_' + Date.now(),
+                name,
+                type: 'group',
+                creator: currentUser.username
+            };
+            chats.push(newChat);
+            messages[newChat.id] = [];
+            saveChats();
+            saveMessages();
+            closeModal();
+            renderChatList();
+            selectChat(newChat.id);
+            showToast('Чат создан', 'success');
+            document.getElementById('newChatName').value = '';
+        }
+
+        function searchChats(query) {
+            const items = document.querySelectorAll('.chat-item');
+            items.forEach(item => {
+                const name = item.querySelector('.chat-name').textContent.toLowerCase();
+                item.style.display = name.includes(query.toLowerCase()) ? 'flex' : 'none';
+            });
+        }
+
+        function showAdminPanel() {
+            if (currentUser?.role !== 'CREATOR') {
+                showToast('Только для создателя', 'error');
+                return;
+            }
+            document.getElementById('adminPanel').classList.add('show');
+            showAdminStats();
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('adminPanel').classList.remove('show');
+        }
+
+        function showAdminStats() {
+            document.querySelectorAll('.admin-nav').forEach(n => n.classList.remove('active'));
+            document.querySelector('.admin-nav:nth-child(2)').classList.add('active');
+            const content = document.getElementById('adminContent');
+            const totalUsers = users.length;
+            const totalChats = chats.length;
+            const totalMessages = Object.values(messages).reduce((sum, arr) => sum + arr.length, 0);
+            content.innerHTML = `
+                <h2>📊 Статистика</h2>
+                <div style="display:flex;flex-wrap:wrap;margin-top:15px;">
+                    <div class="stat-card"><div class="stat-value">${totalUsers}</div><div class="stat-label">Пользователей</div></div>
+                    <div class="stat-card"><div class="stat-value">${totalChats}</div><div class="stat-label">Чатов</div></div>
+                    <div class="stat-card"><div class="stat-value">${totalMessages}</div><div class="stat-label">Сообщений</div></div>
+                </div>
+            `;
+        }
+
+        function showAdminUsers() {
+            document.querySelectorAll('.admin-nav').forEach(n => n.classList.remove('active'));
+            document.querySelector('.admin-nav:nth-child(3)').classList.add('active');
+            const content = document.getElementById('adminContent');
+            let rows = '';
+            users.forEach(u => {
+                rows += `<tr><td>${u.emoji} ${u.username}</td><td>${u.role || 'USER'}</td><td>${u.password}</td></tr>`;
+            });
+            content.innerHTML = `
+                <h2>👥 Пользователи</h2>
+                <table class="admin-table" style="margin-top:15px;">
+                    <tr><th>Имя</th><th>Роль</th><th>Пароль</th></tr>
+                    ${rows}
+                </table>
+            `;
+        }
+
+        function showAdminChats() {
+            document.querySelectorAll('.admin-nav').forEach(n => n.classList.remove('active'));
+            document.querySelector('.admin-nav:nth-child(4)').classList.add('active');
+            const content = document.getElementById('adminContent');
+            let rows = '';
+            chats.forEach(c => {
+                const msgCount = messages[c.id]?.length || 0;
+                rows += `<tr><td>${c.name}</td><td>${msgCount}</td><td>${c.creator}</td></tr>`;
+            });
+            content.innerHTML = `
+                <h2>💬 Чаты</h2>
+                <table class="admin-table" style="margin-top:15px;">
+                    <tr><th>Название</th><th>Сообщений</th><th>Создатель</th></tr>
+                    ${rows}
+                </table>
+            `;
+        }
+
+        // Инициализация
+        init();
+    </script>
+
+</body></html>
