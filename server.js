@@ -44,6 +44,13 @@ const UserSchema = new mongoose.Schema({
     language: { type: String, default: 'ru' },
     twoFA: { enabled: { type: Boolean, default: false }, password: { type: String, default: '' } },
     contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    // Звёзды
+    stars: { type: Number, default: 100 },
+    totalStarsSpent: { type: Number, default: 0 },
+    totalStarsEarned: { type: Number, default: 0 },
+    lastDailyBonus: { type: Date, default: null },
+    lastOnlineAt: { type: Date, default: Date.now },
+    
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -125,10 +132,98 @@ const Gift = mongoose.model('Gift', GiftSchema);
 const UserGift = mongoose.model('UserGift', UserGiftSchema);
 const Post = mongoose.model('Post', PostSchema);
 const Story = mongoose.model('Story', StorySchema);
+// ============ ЗВЁЗДЫ ============
 
+const StarTransactionSchema = new mongoose.Schema({
+    from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    to: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    amount: { type: Number, required: true },
+    type: {
+        type: String,
+        enum: ['admin_grant', 'gift_purchase', 'post_reward', 'bonus', 'refund', 'bonus_daily'],
+        default: 'admin_grant'
+    },
+    description: { type: String, default: '' },
+    createdAt: { type: Date, default: Date.now }
+});
+
+// ============ ФОРМЫ ПОДАРКОВ ============
+
+const GiftFormSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    form: {
+        type: String,
+        enum: ['bear', 'rose', 'heart', 'star', 'cake', 'crown', 'diamond', 'rocket', 'clover', 'trophy', 'gift', 'ring'],
+        required: true
+    },
+    color: { type: String, default: '#f39c12' },
+    colorSecondary: { type: String, default: '#e67e22' },
+    price: { type: Number, default: 10 },
+    rarity: {
+        type: String,
+        enum: ['common', 'rare', 'epic', 'legendary', 'mythic'],
+        default: 'common'
+    },
+    animation: {
+        type: String,
+        enum: ['bounce', 'spin', 'pulse', 'shake', 'float', 'rainbow'],
+        default: 'bounce'
+    },
+    description: { type: String, default: '' },
+    isActive: { type: Boolean, default: true },
+    order: { type: Number, default: 0 },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const GiftPurchaseSchema = new mongoose.Schema({
+    buyer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    form: { type: mongoose.Schema.Types.ObjectId, ref: 'GiftForm', required: true },
+    pricePaid: { type: Number, required: true },
+    message: { type: String, default: '', maxlength: 200 },
+    isAnonymous: { type: Boolean, default: false },
+    isNew: { type: Boolean, default: true },
+    purchasedAt: { type: Date, default: Date.now }
+});
+
+const ChatFolderSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    name: { type: String, required: true, maxlength: 30 },
+    emoji: { type: String, default: '📁' },
+    chats: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Chat' }],
+    order: { type: Number, default: 0 },
+    isDefault: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const UserInterfaceSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+    darkMode: { type: Boolean, default: false },
+    theme: { type: String, enum: ['day', 'night', 'system'], default: 'day' },
+    accentColor: { type: String, default: '#517da2' },
+    fontSize: { type: Number, default: 16 },
+    chatView: {
+        type: String,
+        enum: ['all', 'new', 'personal', 'groups', 'channels'],
+        default: 'all'
+    },
+    searchTab: {
+        type: String,
+        enum: ['chats', 'channels', 'apps', 'posts', 'photos', 'videos', 'files', 'links', 'music', 'voice'],
+        default: 'chats'
+    },
+    activeFolder: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatFolder', default: null }
+});
+
+const StarTransaction = mongoose.model('StarTransaction', StarTransactionSchema);
+const GiftForm = mongoose.model('GiftForm', GiftFormSchema);
+const GiftPurchase = mongoose.model('GiftPurchase', GiftPurchaseSchema);
+const ChatFolder = mongoose.model('ChatFolder', ChatFolderSchema);
+const UserInterface = mongoose.model('UserInterface', UserInterfaceSchema);
 // ============ ИНИЦИАЛИЗАЦИЯ ============
 async function initializeCreator() {
     try {
+        ...
         const creator = await User.findOne({ username: 'ShitRat_Creator' });
         if (!creator) {
             const hashed = await bcrypt.hash('ShitRat2024!', 12);
@@ -157,6 +252,7 @@ async function initializeCreator() {
 
 async function initializeGifts() {
     try {
+
         const count = await Gift.countDocuments();
         if (count > 0) return;
 
@@ -186,9 +282,159 @@ async function initializeGifts() {
         console.log('🎁 Подарки инициализированы: 20');
     } catch (e) { console.error('Ошибка подарков:', e); }
 }
+// ============ ИНИЦИАЛИЗАЦИЯ ФОРМ ПОДАРКОВ ============
+async function initializeGiftForms() {
+    try {
+        const count = await GiftForm.countDocuments();
+        if (count > 0) return;
+        
+        const forms = [
+            {
+                name: 'Роза',
+                form: 'rose',
+                color: '#e74c3c',
+                colorSecondary: '#27ae60',
+                price: 5,
+                rarity: 'common',
+                animation: 'pulse',
+                description: 'Красная роза — символ любви',
+                order: 1
+            },
+            {
+                name: 'Сердце',
+                form: 'heart',
+                color: '#e91e63',
+                colorSecondary: '#c2185b',
+                price: 10,
+                rarity: 'common',
+                animation: 'pulse',
+                description: 'Сердце от чистого сердца',
+                order: 2
+            },
+            {
+                name: 'Мишка',
+                form: 'bear',
+                color: '#d4a574',
+                colorSecondary: '#a67c52',
+                price: 15,
+                rarity: 'common',
+                animation: 'bounce',
+                description: 'Милый плюшевый медвежонок',
+                order: 3
+            },
+            {
+                name: 'Звезда',
+                form: 'star',
+                color: '#f39c12',
+                colorSecondary: '#e67e22',
+                price: 25,
+                rarity: 'rare',
+                animation: 'spin',
+                description: 'Сияющая золотая звезда',
+                order: 4
+            },
+            {
+                name: 'Подарок',
+                form: 'gift',
+                color: '#9b59b6',
+                colorSecondary: '#f39c12',
+                price: 30,
+                rarity: 'rare',
+                animation: 'shake',
+                description: 'Коробка с сюрпризом',
+                order: 5
+            },
+            {
+                name: 'Торт',
+                form: 'cake',
+                color: '#ff9eb8',
+                colorSecondary: '#f4c542',
+                price: 50,
+                rarity: 'rare',
+                animation: 'bounce',
+                description: 'Праздничный торт со свечами',
+                order: 6
+            },
+            {
+                name: 'Клевер',
+                form: 'clover',
+                color: '#27ae60',
+                colorSecondary: '#16a085',
+                price: 75,
+                rarity: 'rare',
+                animation: 'float',
+                description: 'Клевер на удачу',
+                order: 7
+            },
+            {
+                name: 'Корона',
+                form: 'crown',
+                color: '#f39c12',
+                colorSecondary: '#d68910',
+                price: 100,
+                rarity: 'epic',
+                animation: 'rainbow',
+                description: 'Золотая королевская корона',
+                order: 8
+            },
+            {
+                name: 'Кубок',
+                form: 'trophy',
+                color: '#f1c40f',
+                colorSecondary: '#b8860b',
+                price: 150,
+                rarity: 'epic',
+                animation: 'float',
+                description: 'Кубок победителя',
+                order: 9
+            },
+            {
+                name: 'Алмаз',
+                form: 'diamond',
+                color: '#5dade2',
+                colorSecondary: '#2874a6',
+                price: 200,
+                rarity: 'epic',
+                animation: 'spin',
+                description: 'Сияющий драгоценный алмаз',
+                order: 10
+            },
+            {
+                name: 'Ракета',
+                form: 'rocket',
+                color: '#e74c3c',
+                colorSecondary: '#95a5a6',
+                price: 300,
+                rarity: 'legendary',
+                animation: 'float',
+                description: 'Космическая ракета',
+                order: 11
+            },
+            {
+                name: 'Кольцо',
+                form: 'ring',
+                color: '#f1c40f',
+                colorSecondary: '#d4af37',
+                price: 500,
+                rarity: 'mythic',
+                animation: 'rainbow',
+                description: 'Золотое кольцо с бриллиантом',
+                order: 12
+            }
+        ];
+        
+        await GiftForm.insertMany(forms);
+        console.log('🎨 Формы подарков инициализированы: ' + forms.length);
+    } catch (e) {
+        console.error('Ошибка форм подарков:', e);
+    }
+}
 
 mongoose.connection.once('open', () => {
-    initializeCreator().then(() => initializeGifts());
+    initializeCreator().then(() => {
+        initializeGifts();
+        initializeGiftForms();
+    });
 });
 
 // ============ MIDDLEWARE ============
@@ -674,6 +920,559 @@ app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) =>
     const totalPosts = await Post.countDocuments();
     res.json({ totalUsers, totalChats, totalMessages, bannedUsers, onlineUsers, totalPosts });
 });
+// ============ API ФОРМ ПОДАРКОВ ============
+
+// Получить все формы подарков
+app.get('/api/gift-forms', authMiddleware, async (req, res) => {
+    try {
+        const forms = await GiftForm.find({ isActive: true }).sort({ order: 1 });
+        res.json({ forms });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Получить одну форму
+app.get('/api/gift-forms/:id', authMiddleware, async (req, res) => {
+    try {
+        const form = await GiftForm.findById(req.params.id);
+        if (!form) return res.status(404).json({ error: 'Не найдено' });
+        res.json({ form });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Купить и отправить подарок
+app.post('/api/gift-forms/send', authMiddleware, async (req, res) => {
+    try {
+        const { recipientId, formId, message, isAnonymous } = req.body;
+        
+        if (!recipientId || !formId) {
+            return res.status(400).json({ error: 'Укажите получателя и подарок' });
+        }
+        
+        if (recipientId === req.userId) {
+            return res.status(400).json({ error: 'Нельзя подарить себе' });
+        }
+        
+        const form = await GiftForm.findById(formId);
+        if (!form) return res.status(404).json({ error: 'Подарок не найден' });
+        
+        const recipient = await User.findById(recipientId);
+        if (!recipient) return res.status(404).json({ error: 'Получатель не найден' });
+        
+        const buyer = await User.findById(req.userId);
+        if (!buyer) return res.status(404).json({ error: 'Покупатель не найден' });
+        
+        // Проверить баланс
+        if ((buyer.stars || 0) < form.price) {
+            return res.status(400).json({ 
+                error: `Недостаточно звёзд. Нужно ${form.price}, у вас ${buyer.stars || 0}`,
+                need: form.price,
+                have: buyer.stars || 0
+            });
+        }
+        
+        // Списать звёзды у покупателя
+        buyer.stars -= form.price;
+        buyer.totalStarsSpent = (buyer.totalStarsSpent || 0) + form.price;
+        await buyer.save();
+        
+        // Записать транзакцию покупки
+        await new StarTransaction({
+            from: req.userId,
+            to: recipientId,
+            amount: -form.price,
+            type: 'gift_purchase',
+            description: `Подарок: ${form.name}`
+        }).save();
+        
+        // Создать запись покупки
+        const purchase = new GiftPurchase({
+            buyer: req.userId,
+            recipient: recipientId,
+            form: formId,
+            pricePaid: form.price,
+            message: message || '',
+            isAnonymous: isAnonymous || false,
+            isNew: true
+        });
+        await purchase.save();
+        
+        // Уведомить получателя через WebSocket
+        io.emit('gift-form-received', {
+            recipientId,
+            purchase: await GiftPurchase.findById(purchase._id)
+                .populate('form')
+                .populate('buyer', 'username emoji avatar')
+        });
+        
+        res.json({
+            success: true,
+            purchase,
+            newBalance: buyer.stars
+        });
+    } catch (e) {
+        console.error('Ошибка отправки подарка:', e);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Получить мои покупки (что я купил другим)
+app.get('/api/gift-forms/my-purchases', authMiddleware, async (req, res) => {
+    try {
+        const purchases = await GiftPurchase.find({ buyer: req.userId })
+            .populate('form')
+            .populate('recipient', 'username emoji avatar')
+            .sort({ purchasedAt: -1 })
+            .limit(100);
+        
+        res.json({ purchases });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Получить полученные подарки
+app.get('/api/gift-forms/received', authMiddleware, async (req, res) => {
+    try {
+        const received = await GiftPurchase.find({ recipient: req.userId })
+            .populate('form')
+            .populate('buyer', 'username emoji avatar')
+            .sort({ purchasedAt: -1 })
+            .limit(100);
+        
+        // Скрыть имя если анонимно
+        const result = received.map(p => {
+            const obj = p.toObject();
+            if (obj.isAnonymous && obj.buyer) {
+                obj.buyer = {
+                    username: 'Аноним',
+                    emoji: '👤',
+                    avatar: ''
+                };
+            }
+            return obj;
+        });
+        
+        res.json({ received: result });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Получить подарки конкретного пользователя (публично)
+app.get('/api/gift-forms/user/:userId', authMiddleware, async (req, res) => {
+    try {
+        const received = await GiftPurchase.find({ recipient: req.params.userId })
+            .populate('form')
+            .sort({ purchasedAt: -1 })
+            .limit(50);
+        
+        // Убрать имена отправителей (приватность)
+        const result = received.map(p => ({
+            _id: p._id,
+            form: p.form,
+            message: p.message,
+            purchasedAt: p.purchasedAt,
+            isAnonymous: p.isAnonymous
+        }));
+        
+        res.json({ gifts: result });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Отметить подарок как просмотренный
+app.post('/api/gift-forms/:purchaseId/view', authMiddleware, async (req, res) => {
+    try {
+        await GiftPurchase.findOneAndUpdate(
+            { _id: req.params.purchaseId, recipient: req.userId },
+            { isNew: false }
+        );
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// СОЗДАТЕЛЬ: создать новую форму
+app.post('/api/gift-forms/create', authMiddleware, async (req, res) => {
+    try {
+        if (req.userRole !== 'CREATOR') {
+            return res.status(403).json({ error: 'Только создатель' });
+        }
+        
+        const { name, form, color, colorSecondary, price, rarity, animation, description, order } = req.body;
+        
+        if (!name || !form) {
+            return res.status(400).json({ error: 'Укажите название и форму' });
+        }
+        
+        const newForm = new GiftForm({
+            name,
+            form,
+            color: color || '#f39c12',
+            colorSecondary: colorSecondary || '#e67e22',
+            price: price || 10,
+            rarity: rarity || 'common',
+            animation: animation || 'bounce',
+            description: description || '',
+            order: order || 999
+        });
+        
+        await newForm.save();
+        res.json({ form: newForm });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// СОЗДАТЕЛЬ: удалить форму
+app.delete('/api/gift-forms/:id', authMiddleware, async (req, res) => {
+    try {
+        if (req.userRole !== 'CREATOR') {
+            return res.status(403).json({ error: 'Только создатель' });
+        }
+        
+        await GiftForm.findByIdAndUpdate(req.params.id, { isActive: false });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// СОЗДАТЕЛЬ: изменить форму
+app.put('/api/gift-forms/:id', authMiddleware, async (req, res) => {
+    try {
+        if (req.userRole !== 'CREATOR') {
+            return res.status(403).json({ error: 'Только создатель' });
+        }
+        
+        const form = await GiftForm.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true }
+        );
+        
+        if (!form) return res.status(404).json({ error: 'Не найдено' });
+        res.json({ form });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Статистика подарков (для создателя)
+app.get('/api/gift-forms/stats', authMiddleware, async (req, res) => {
+    try {
+        if (req.userRole !== 'CREATOR' && req.userRole !== 'ADMIN') {
+            return res.status(403).json({ error: 'Нет доступа' });
+        }
+        
+        const totalPurchases = await GiftPurchase.countDocuments();
+        
+        // Сумма потраченных звёзд
+        const totalStarsSpent = await GiftPurchase.aggregate([
+            { $group: { _id: null, sum: { $sum: '$pricePaid' } } }
+        ]);
+        
+        // Топ подарков
+        const topForms = await GiftPurchase.aggregate([
+            { $group: { _id: '$form', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 10 }
+        ]);
+        
+        // Подтянуть названия
+        const formsWithCount = await Promise.all(topForms.map(async item => {
+            const form = await GiftForm.findById(item._id);
+            return {
+                form,
+                count: item.count
+            };
+        }));
+        
+        res.json({
+            totalPurchases,
+            totalStarsSpent: totalStarsSpent[0]?.sum || 0,
+            topForms: formsWithCount
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+// ============ API ПАПОК ЧАТОВ ============
+
+// Получить все папки пользователя
+app.get('/api/folders', authMiddleware, async (req, res) => {
+    try {
+        let folders = await ChatFolder.find({ user: req.userId })
+            .populate('chats', 'name type avatar')
+            .sort({ order: 1 });
+        
+        // Если у пользователя нет папок — создать дефолтные
+        if (folders.length === 0) {
+            const defaultFolders = [
+                { user: req.userId, name: 'Все', emoji: '📥', order: 0, isDefault: true },
+                { user: req.userId, name: 'Новые', emoji: '🆕', order: 1, isDefault: true },
+                { user: req.userId, name: 'Личные', emoji: '👤', order: 2, isDefault: true },
+                { user: req.userId, name: 'Группы', emoji: '👥', order: 3, isDefault: true }
+            ];
+            await ChatFolder.insertMany(defaultFolders);
+            
+            folders = await ChatFolder.find({ user: req.userId })
+                .populate('chats', 'name type avatar')
+                .sort({ order: 1 });
+        }
+        
+        res.json({ folders });
+    } catch (e) {
+        console.error('Ошибка папок:', e);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Создать папку
+app.post('/api/folders', authMiddleware, async (req, res) => {
+    try {
+        const { name, emoji } = req.body;
+        
+        if (!name || name.length < 1 || name.length > 30) {
+            return res.status(400).json({ error: 'Название 1-30 символов' });
+        }
+        
+        // Максимум 10 папок
+        const count = await ChatFolder.countDocuments({ user: req.userId });
+        if (count >= 10) {
+            return res.status(400).json({ error: 'Максимум 10 папок' });
+        }
+        
+        const folder = new ChatFolder({
+            user: req.userId,
+            name,
+            emoji: emoji || '📁',
+            order: count,
+            isDefault: false
+        });
+        
+        await folder.save();
+        res.status(201).json({ folder });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Изменить папку
+app.put('/api/folders/:folderId', authMiddleware, async (req, res) => {
+    try {
+        const { name, emoji } = req.body;
+        
+        const folder = await ChatFolder.findOne({
+            _id: req.params.folderId,
+            user: req.userId
+        });
+        
+        if (!folder) return res.status(404).json({ error: 'Папка не найдена' });
+        
+        if (folder.isDefault && name !== undefined) {
+            return res.status(400).json({ error: 'Нельзя переименовать системную папку' });
+        }
+        
+        if (name !== undefined) folder.name = name;
+        if (emoji !== undefined) folder.emoji = emoji;
+        
+        await folder.save();
+        res.json({ folder });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Удалить папку
+app.delete('/api/folders/:folderId', authMiddleware, async (req, res) => {
+    try {
+        const folder = await ChatFolder.findOne({
+            _id: req.params.folderId,
+            user: req.userId
+        });
+        
+        if (!folder) return res.status(404).json({ error: 'Папка не найдена' });
+        
+        if (folder.isDefault) {
+            return res.status(400).json({ error: 'Нельзя удалить системную папку' });
+        }
+        
+        await ChatFolder.deleteOne({ _id: folder._id });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Добавить чат в папку
+app.post('/api/folders/:folderId/chats', authMiddleware, async (req, res) => {
+    try {
+        const { chatId } = req.body;
+        if (!chatId) return res.status(400).json({ error: 'Укажите чат' });
+        
+        const folder = await ChatFolder.findOne({
+            _id: req.params.folderId,
+            user: req.userId
+        });
+        
+        if (!folder) return res.status(404).json({ error: 'Папка не найдена' });
+        if (folder.isDefault) {
+            return res.status(400).json({ error: 'Системные папки заполняются автоматически' });
+        }
+        
+        // Проверить, что пользователь участник чата
+        const chat = await Chat.findById(chatId);
+        if (!chat) return res.status(404).json({ error: 'Чат не найден' });
+        
+        if (!chat.members.some(m => m.toString() === req.userId)) {
+            return res.status(403).json({ error: 'Вы не участник этого чата' });
+        }
+        
+        // Добавить, если ещё нет
+        if (!folder.chats.some(c => c.toString() === chatId)) {
+            folder.chats.push(chatId);
+            await folder.save();
+        }
+        
+        res.json({ folder });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Убрать чат из папки
+app.delete('/api/folders/:folderId/chats/:chatId', authMiddleware, async (req, res) => {
+    try {
+        const folder = await ChatFolder.findOne({
+            _id: req.params.folderId,
+            user: req.userId
+        });
+        
+        if (!folder) return res.status(404).json({ error: 'Папка не найдена' });
+        if (folder.isDefault) {
+            return res.status(400).json({ error: 'Нельзя изменить системную папку' });
+        }
+        
+        folder.chats = folder.chats.filter(c => c.toString() !== req.params.chatId);
+        await folder.save();
+        
+        res.json({ folder });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Получить чаты для конкретной вкладки (Все / Новые / Личные / Группы)
+app.get('/api/chats/filtered/:view', authMiddleware, async (req, res) => {
+    try {
+        const view = req.params.view;
+        
+        let query = { members: req.userId };
+        
+        if (view === 'personal') {
+            query.type = 'direct';
+        } else if (view === 'groups') {
+            query.type = { $in: ['group', 'channel'] };
+        } else if (view === 'channels') {
+            query.type = 'channel';
+        }
+        // view === 'all' или 'new' — все чаты
+        
+        const chats = await Chat.find(query)
+            .populate('creator', 'username emoji avatar')
+            .populate({
+                path: 'lastMessage',
+                populate: { path: 'author', select: 'username emoji avatar' }
+            })
+            .sort({ createdAt: -1 });
+        
+        // Для "new" — фильтруем непрочитанные
+        if (view === 'new') {
+            const unread = chats.filter(chat => {
+                return chat.lastMessage && 
+                    chat.lastMessage.author._id.toString() !== req.userId;
+            });
+            return res.json({ chats: unread });
+        }
+        
+        res.json({ chats });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// ============ API НАСТРОЕК ИНТЕРФЕЙСА ============
+
+// Получить настройки интерфейса
+app.get('/api/interface', authMiddleware, async (req, res) => {
+    try {
+        let ui = await UserInterface.findOne({ user: req.userId });
+        
+        // Если нет — создать
+        if (!ui) {
+            ui = new UserInterface({ user: req.userId });
+            await ui.save();
+        }
+        
+        res.json({ interface: ui });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Обновить настройки интерфейса
+app.put('/api/interface', authMiddleware, async (req, res) => {
+    try {
+        const allowedFields = ['darkMode', 'theme', 'accentColor', 'fontSize', 'chatView', 'searchTab', 'activeFolder'];
+        
+        const update = {};
+        allowedFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                update[field] = req.body[field];
+            }
+        });
+        
+        let ui = await UserInterface.findOne({ user: req.userId });
+        if (!ui) {
+            ui = new UserInterface({ user: req.userId, ...update });
+        } else {
+            Object.assign(ui, update);
+        }
+        
+        await ui.save();
+        res.json({ interface: ui });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Переключить тёмную тему
+app.post('/api/interface/toggle-dark', authMiddleware, async (req, res) => {
+    try {
+        let ui = await UserInterface.findOne({ user: req.userId });
+        if (!ui) {
+            ui = new UserInterface({ user: req.userId });
+        }
+        
+        ui.darkMode = !ui.darkMode;
+        ui.theme = ui.darkMode ? 'night' : 'day';
+        await ui.save();
+        
+        res.json({ 
+            darkMode: ui.darkMode,
+            theme: ui.theme
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
 
 // ============ WEBSOCKET ============
 io.on('connection', (socket) => {
@@ -682,11 +1481,201 @@ io.on('connection', (socket) => {
     socket.on('leave-chat', (chatId) => socket.leave(chatId));
     socket.on('disconnect', () => console.log('🔌 Отключение:', socket.id));
 });
+// ============ API ЗВЁЗД ============
 
+// Получить баланс звёзд
+app.get('/api/stars/balance', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select('stars totalStarsSpent totalStarsEarned');
+        if (!user) return res.status(404).json({ error: 'Не найден' });
+        
+        res.json({
+            stars: user.stars || 0,
+            totalSpent: user.totalStarsSpent || 0,
+            totalEarned: user.totalStarsEarned || 0
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Ежедневный бонус
+app.post('/api/stars/daily', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+        if (!user) return res.status(404).json({ error: 'Не найден' });
+        
+        const now = new Date();
+        const lastBonus = user.lastDailyBonus ? new Date(user.lastDailyBonus) : null;
+        
+        // Проверка — прошло ли 24 часа
+        if (lastBonus) {
+            const diff = now - lastBonus;
+            const hours = diff / (1000 * 60 * 60);
+            
+            if (hours < 24) {
+                const hoursLeft = Math.ceil(24 - hours);
+                return res.status(400).json({
+                    error: `Бонус будет доступен через ${hoursLeft} ч.`,
+                    hoursLeft
+                });
+            }
+        }
+        
+        // Начисление бонуса
+        const bonus = 10;
+        user.stars = (user.stars || 0) + bonus;
+        user.totalStarsEarned = (user.totalStarsEarned || 0) + bonus;
+        user.lastDailyBonus = now;
+        await user.save();
+        
+        // Записать транзакцию
+        await new StarTransaction({
+            to: req.userId,
+            amount: bonus,
+            type: 'bonus_daily',
+            description: 'Ежедневный бонус'
+        }).save();
+        
+        res.json({
+            success: true,
+            bonus,
+            stars: user.stars
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Проверить доступность ежедневного бонуса
+app.get('/api/stars/daily-status', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select('lastDailyBonus');
+        if (!user) return res.status(404).json({ error: 'Не найден' });
+        
+        const now = new Date();
+        const lastBonus = user.lastDailyBonus ? new Date(user.lastDailyBonus) : null;
+        
+        if (!lastBonus) {
+            return res.json({ available: true, hoursLeft: 0 });
+        }
+        
+        const diff = now - lastBonus;
+        const hours = diff / (1000 * 60 * 60);
+        
+        if (hours >= 24) {
+            return res.json({ available: true, hoursLeft: 0 });
+        }
+        
+        return res.json({ 
+            available: false, 
+            hoursLeft: Math.ceil(24 - hours)
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Выдать звёзды (только создатель)
+app.post('/api/stars/give', authMiddleware, async (req, res) => {
+    try {
+        if (req.userRole !== 'CREATOR' && req.userRole !== 'ADMIN') {
+            return res.status(403).json({ error: 'Только создатель' });
+        }
+        
+        const { userId, amount, description } = req.body;
+        
+        if (!userId || !amount) {
+            return res.status(400).json({ error: 'Укажите пользователя и количество' });
+        }
+        
+        const numAmount = parseInt(amount);
+        if (isNaN(numAmount) || numAmount === 0) {
+            return res.status(400).json({ error: 'Некорректное количество' });
+        }
+        
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+        
+        // Начислить или списать
+        user.stars = (user.stars || 0) + numAmount;
+        
+        if (numAmount > 0) {
+            user.totalStarsEarned = (user.totalStarsEarned || 0) + numAmount;
+        } else {
+            user.totalStarsSpent = (user.totalStarsSpent || 0) + Math.abs(numAmount);
+        }
+        
+        // Не уходить в минус
+        if (user.stars < 0) user.stars = 0;
+        
+        await user.save();
+        
+        // Записать транзакцию
+        await new StarTransaction({
+            from: req.userId,
+            to: userId,
+            amount: numAmount,
+            type: 'admin_grant',
+            description: description || 'Начислено создателем'
+        }).save();
+        
+        res.json({
+            success: true,
+            newBalance: user.stars
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// История транзакций
+app.get('/api/stars/history', authMiddleware, async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        
+        const transactions = await StarTransaction.find({
+            $or: [{ to: req.userId }, { from: req.userId }]
+        })
+            .populate('from', 'username emoji avatar')
+            .populate('to', 'username emoji avatar')
+            .sort({ createdAt: -1 })
+            .limit(limit);
+        
+        res.json({ transactions });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Топ по звёздам
+app.get('/api/stars/top', authMiddleware, async (req, res) => {
+    try {
+        const users = await User.find({ isBanned: false })
+            .select('username emoji avatar stars')
+            .sort({ stars: -1 })
+            .limit(50);
+        
+        res.json({ users });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+// Получить баланс конкретного пользователя
+app.get('/api/stars/user/:userId', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId).select('stars');
+        if (!user) return res.status(404).json({ error: 'Не найден' });
+        
+        res.json({ stars: user.stars || 0 });
+    } catch (e) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
 // ============ ЗАПУСК ============
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`🐀 ShitRat сервер запущен на порту ${PORT}`);
     console.log(`🌐 Открой: http://localhost:${PORT}/index.html`);
 });
-  
