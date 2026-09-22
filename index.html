@@ -1500,9 +1500,24 @@
                     <div class="sidebar-user-username" id="sbUserUsername">@...</div>
                 </div>
             </div>
+<button class="sidebar-icon-btn" onclick="openWallet()" title="Кошелёк" style="position:relative;">
+    ⭐
+    <span id="sidebarStars" style="position:absolute;bottom:-2px;right:-2px;background:#f4c542;color:white;font-size:9px;font-weight:700;padding:1px 4px;border-radius:6px;border:1.5px solid white;">0<
+/span>
+</button>
             <button class="sidebar-icon-btn" onclick="openSettings()" title="Настройки">⚙️</button>
         </div>
-
+        <!-- ПЕРЕКЛЮЧАТЕЛЬ ТЁМНОЙ ТЕМЫ (ПК) -->
+        <div class="theme-switch-row" style="border-bottom: 1px solid var(--tg-border); padding: 8px 16px;">
+            <div class="theme-switch-label" style="font-size: 13px; gap: 8px;">
+                <span class="icon" style="font-size: 18px;">🌙</span>
+                <span>Тёмная тема</span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="darkThemeSwitch" onchange="toggleDarkTheme(this.checked)">
+                <span class="switch-slider"></span>
+            </label>
+        </div>
         <!-- Поиск -->
         <div class="sidebar-search">
             <input type="text" id="desktopSearch" placeholder="Поиск чатов" oninput="searchChats(this.value)">
@@ -1530,11 +1545,31 @@
 
         <!-- Список чатов (для ПК показывается когда выбрана вкладка "Чаты") -->
         <div class="sidebar-chats" id="sidebarChats"></div>
-    </div>
-
-    <!-- ========== ОСНОВНАЯ ОБЛАСТЬ ========== -->
-    <div class="main-area">
-
+        <!-- ПАПКИ ЧАТОВ (для ПК) -->
+        <div class="sidebar-folders" id="sidebarFolders" style="padding: 8px 12px; border-bottom: 1px solid var(--tg-border); display: none;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div style="font-size: 12px; font-weight: 600; color: var(--tg-text-secondary); text-transform: uppercase; letter-spacing: 0.4px;">
+                    📁 Папки
+                </div>
+                <button onclick="openCreateFolder()" style="background: none; border: none; color: var(--tg-blue); font-size: 16px; cursor: pointer; padding: 2px 6px; border-radius: 4px;" title="Создать папку">＋</button>
+            </div>
+    <div id="foldersList" style="display: flex; flex-direction: column; gap: 4px;"></div>
+</div>
+</div>
+<!-- ОСНОВНАЯ ОБЛАСТЬ -->
+<div class="main-area">
+        <!-- ВКЛАДКИ ПОИСКА (только для ПК) -->
+        <div class="search-tabs" id="searchTabs" style="display: none;">
+            <button class="search-tab active" data-tab="chats" onclick="switchSearchTab('chats')">💬 Чаты</button>
+            <button class="search-tab" data-tab="channels" onclick="switchSearchTab('channels')">📢 Каналы</button>
+            <button class="search-tab" data-tab="posts" onclick="switchSearchTab('posts')">📰 Посты</button>
+            <button class="search-tab" data-tab="photos" onclick="switchSearchTab('photos')">📷 Фото</button>
+            <button class="search-tab" data-tab="videos" onclick="switchSearchTab('videos')">🎥 Видео</button>
+            <button class="search-tab" data-tab="files" onclick="switchSearchTab('files')">📁 Файлы</button>
+            <button class="search-tab" data-tab="links" onclick="switchSearchTab('links')">🔗 Ссылки</button>
+            <button class="search-tab" data-tab="music" onclick="switchSearchTab('music')">🎵 Музыка</button>
+            <button class="search-tab" data-tab="voice" onclick="switchSearchTab('voice')">🎤 Голос</button>
+        </div>
         <!-- СТРАНИЦА: ПУБЛИКАЦИИ -->
         <div class="page active" id="page-posts">
             <div class="page-header">
@@ -1556,7 +1591,20 @@
                 <div class="search-wrapper">
                     <input type="text" placeholder="Поиск чатов" oninput="searchChats(this.value)">
                 </div>
-            </div>
+    <div class="chats-tabs" id="chatsTabs">
+        <button class="chats-tab active" data-view="all" onclick="switchChatsTab('all')">
+            📥 Все
+        </button>
+        <button class="chats-tab" data-view="new" onclick="switchChatsTab('new')">
+            🆕 Новые
+        </button>
+        <button class="chats-tab" data-view="personal" onclick="switchChatsTab('personal')">
+            👤 Личные
+        </button>
+        <button class="chats-tab" data-view="groups" onclick="switchChatsTab('groups')">
+            👥 Группы
+        </button>
+    </div>
             <div class="chat-list" id="chatList"></div>
             <button class="fab" onclick="showCreateChat()">＋</button>
         </div>
@@ -1718,6 +1766,54 @@
     <div class="gift-reveal-from" id="revealFrom"></div>
     <button class="gift-reveal-close" onclick="closeGiftReveal()">Продолжить</button>
 </div>
+<!-- ========== КОШЕЛЁК ========== -->
+<div class="modal" id="walletModal" onclick="if(event.target===this) closeModal('walletModal')">
+    <div class="modal-content" id="walletModalContent"></div>
+</div>
+
+<!-- ========== МАГАЗИН ПОДАРКОВ ========== -->
+<div class="modal" id="shopModal" onclick="if(event.target===this) closeModal('shopModal')">
+    <div class="modal-content">
+        <div class="modal-title">🛒 Магазин подарков</div>
+        <div id="shopGrid" class="shop-grid"></div>
+        <button class="modal-btn cancel" onclick="closeModal('shopModal')">Закрыть</button>
+    </div>
+</div>
+
+<!-- ========== ПРОСМОТР ПОДАРКА ========== -->
+<div class="gift-viewer" id="giftViewer" onclick="if(event.target===this) closeGiftViewer()">
+    <div class="gift-viewer-content">
+        <div class="gift-viewer-shape" id="giftViewerShape"></div>
+        <div class="gift-viewer-title" id="giftViewerTitle"></div>
+        <div class="gift-viewer-desc" id="giftViewerDesc"></div>
+        <div class="gift-viewer-price" id="giftViewerPrice"></div>
+        <div class="gift-viewer-actions">
+            <button class="modal-btn" id="giftViewerBuyBtn">🎁 Купить и подарить</button>
+            <button class="modal-btn cancel" onclick="closeGiftViewer()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== ВЫБОР ПОЛУЧАТЕЛЯ ========== -->
+<div class="modal" id="chooseRecipientModal" onclick="if(event.target===this) closeModal('chooseRecipientModal')">
+    <div class="modal-content">
+        <div class="modal-title">Кому подарить?</div>
+        <input type="text" class="modal-input" id="recipientSearch" placeholder="Поиск по @username" oninput="searchRecipients(this.value)">
+        <div id="recipientsList" style="margin-top:12px;max-height:300px;overflow-y:auto;"></div>
+        <button class="modal-btn cancel" onclick="closeModal('chooseRecipientModal')">Отмена</button>
+    </div>
+</div>
+
+<!-- ========== АНИМАЦИЯ ПОЛУЧЕНИЯ ПОДАРКА ========== -->
+<div class="gift-received-anim" id="giftReceivedAnim">
+    <div id="giftReceivedConfetti"></div>
+    <div class="gift-received-shape" id="giftReceivedShape"></div>
+    <div class="gift-received-title" id="giftReceivedTitle">Новый подарок!</div>
+    <div class="gift-received-desc" id="giftReceivedDesc"></div>
+    <div class="gift-received-message" id="giftReceivedMessage"></div>
+    <div class="gift-received-from" id="giftReceivedFrom"></div>
+    <button class="gift-received-close" onclick="closeGiftReceived()">Спасибо! 🎉</button>
+</div>
 
 <!-- Тост -->
 <div class="toast" id="toast"></div>
@@ -1832,7 +1928,9 @@
             loadMyGifts(),
             loadStories(),
             loadPosts(),
-            loadContacts()
+            loadContacts(),
+            loadFolders(),
+            loadStars()
         ]);
     }
 
@@ -1902,18 +2000,27 @@
     }
 
     // ============ ЧАТЫ ============
-    async function loadChats() {
+      async function loadChats() {
         try {
             const res = await fetch(API_URL + '/chats', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
             allChats = data.chats || [];
+            
+            // Фильтр по активной папке
+            if (activeFolder) {
+                const folder = folders.find(f => f._id === activeFolder);
+                if (folder && folder.chats) {
+                    const folderChatIds = folder.chats.map(c => c._id || c);
+                    allChats = allChats.filter(c => folderChatIds.includes(c._id));
+                }
+            }
+            
             renderChatList(allChats);
             if (window.innerWidth >= 768) renderSidebarChats();
         } catch (e) { console.error(e); }
     }
-
     function renderChatList(chats) {
         const list = document.getElementById('chatList');
         if (!list) return;
@@ -3306,6 +3413,1676 @@
             renderSidebarChats();
         }
     });
+    // ============ SVG ФОРМЫ ПОДАРКОВ ============
+    function getGiftShape(form, color, colorSecondary) {
+        color = color || '#f39c12';
+        colorSecondary = colorSecondary || '#e67e22';
+        
+        const shapes = {
+            // 🧸 МИШКА
+            bear: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <circle cx="22" cy="25" r="12" fill="${color}"/>
+                    <circle cx="78" cy="25" r="12" fill="${color}"/>
+                    <circle cx="22" cy="25" r="6" fill="${colorSecondary}"/>
+                    <circle cx="78" cy="25" r="6" fill="${colorSecondary}"/>
+                    <circle cx="50" cy="55" r="30" fill="${color}"/>
+                    <ellipse cx="50" cy="65" rx="18" ry="14" fill="${colorSecondary}"/>
+                    <circle cx="40" cy="48" r="3" fill="#222"/>
+                    <circle cx="60" cy="48" r="3" fill="#222"/>
+                    <circle cx="40" cy="47" r="1" fill="#fff"/>
+                    <circle cx="60" cy="47" r="1" fill="#fff"/>
+                    <ellipse cx="50" cy="58" rx="4" ry="3" fill="#222"/>
+                    <path d="M 50 61 Q 44 67 42 63" stroke="#222" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                    <path d="M 50 61 Q 56 67 58 63" stroke="#222" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                    <circle cx="18" cy="90" r="8" fill="${color}"/>
+                    <circle cx="82" cy="90" r="8" fill="${color}"/>
+                </svg>
+            `,
+            
+            // 🌹 РОЗА
+            rose: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <path d="M 50 20 Q 65 25 65 40 Q 65 55 50 60 Q 35 55 35 40 Q 35 25 50 20 Z" fill="${color}"/>
+                    <path d="M 50 25 Q 60 30 60 40 Q 60 50 50 55 Q 40 50 40 40 Q 40 30 50 25 Z" fill="${colorSecondary}" opacity="0.6"/>
+                    <ellipse cx="50" cy="42" rx="5" ry="6" fill="${color}" opacity="0.8"/>
+                    <path d="M 50 60 L 50 90" stroke="#27ae60" stroke-width="3"/>
+                    <path d="M 50 70 Q 35 65 30 75 Q 40 80 50 75" fill="#27ae60"/>
+                    <path d="M 50 78 Q 65 73 70 83 Q 60 88 50 83" fill="#27ae60"/>
+                </svg>
+            `,
+            
+            // ❤️ СЕРДЦЕ
+            heart: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <path d="M 50 85 Q 15 60 15 40 Q 15 20 35 20 Q 45 20 50 30 Q 55 20 65 20 Q 85 20 85 40 Q 85 60 50 85 Z" fill="${color}"/>
+                    <path d="M 30 35 Q 35 30 40 35" stroke="${colorSecondary}" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
+                    <circle cx="30" cy="32" r="4" fill="#fff" opacity="0.4"/>
+                </svg>
+            `,
+            
+            // ⭐ ЗВЕЗДА
+            star: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <polygon points="50,10 61,40 92,40 67,58 76,88 50,70 24,88 33,58 8,40 39,40" fill="${color}" stroke="${colorSecondary}" stroke-width="2"/>
+                    <polygon points="50,25 55,40 70,40 58,50 62,65 50,57 38,65 42,50 30,40 45,40" fill="${colorSecondary}" opacity="0.6"/>
+                    <circle cx="50" cy="45" r="3" fill="#fff" opacity="0.6"/>
+                </svg>
+            `,
+            
+            // 🎂 ТОРТ
+            cake: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <rect x="20" y="55" width="60" height="30" rx="3" fill="${color}"/>
+                    <rect x="20" y="55" width="60" height="8" fill="${colorSecondary}"/>
+                    <rect x="15" y="50" width="70" height="8" rx="2" fill="${colorSecondary}"/>
+                    <rect x="47" y="30" width="6" height="20" fill="#fff"/>
+                    <ellipse cx="50" cy="28" rx="4" ry="6" fill="#ff5722"/>
+                    <circle cx="35" cy="48" r="2" fill="#ff5722"/>
+                    <circle cx="65" cy="48" r="2" fill="#ff5722"/>
+                    <circle cx="50" cy="48" r="2" fill="#ff5722"/>
+                    <rect x="30" y="65" width="3" height="15" fill="#fff" opacity="0.6"/>
+                    <rect x="50" y="65" width="3" height="15" fill="#fff" opacity="0.6"/>
+                    <rect x="70" y="65" width="3" height="15" fill="#fff" opacity="0.6"/>
+                </svg>
+            `,
+            
+            // 👑 КОРОНА
+            crown: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <path d="M 15 75 L 20 40 L 35 55 L 50 25 L 65 55 L 80 40 L 85 75 Z" fill="${color}" stroke="${colorSecondary}" stroke-width="2" stroke-linejoin="round"/>
+                    <rect x="15" y="75" width="70" height="10" rx="2" fill="${colorSecondary}"/>
+                    <circle cx="20" cy="42" r="3" fill="#e74c3c"/>
+                    <circle cx="50" cy="27" r="3" fill="#e74c3c"/>
+                    <circle cx="80" cy="42" r="3" fill="#e74c3c"/>
+                    <circle cx="35" cy="57" r="2" fill="#3498db"/>
+                    <circle cx="65" cy="57" r="2" fill="#3498db"/>
+                    <circle cx="50" cy="70" r="2" fill="#2ecc71"/>
+                </svg>
+            `,
+            
+            // 💎 АЛМАЗ
+            diamond: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <polygon points="50,10 85,35 70,85 30,85 15,35" fill="${color}" stroke="${colorSecondary}" stroke-width="2"/>
+                    <polygon points="50,10 65,35 50,50 35,35" fill="${colorSecondary}" opacity="0.7"/>
+                    <polygon points="50,10 50,50 50,50 35,35" fill="#fff" opacity="0.3"/>
+                    <polygon points="50,50 70,85 30,85" fill="${colorSecondary}" opacity="0.5"/>
+                    <polygon points="15,35 35,35 30,85" fill="${color}" opacity="0.5"/>
+                    <polygon points="85,35 65,35 70,85" fill="${color}" opacity="0.5"/>
+                    <circle cx="42" cy="22" r="2" fill="#fff" opacity="0.7"/>
+                </svg>
+            `,
+            
+            // 🚀 РАКЕТА
+            rocket: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <path d="M 50 10 Q 65 35 65 60 L 60 75 L 40 75 L 35 60 Q 35 35 50 10 Z" fill="${color}"/>
+                    <path d="M 35 60 L 25 75 L 35 70 Z" fill="${colorSecondary}"/>
+                    <path d="M 65 60 L 75 75 L 65 70 Z" fill="${colorSecondary}"/>
+                    <circle cx="50" cy="40" r="6" fill="${colorSecondary}" stroke="#fff" stroke-width="2"/>
+                    <circle cx="50" cy="40" r="3" fill="#3498db"/>
+                    <path d="M 42 75 L 45 90 L 50 82 L 55 90 L 58 75 Z" fill="#f39c12"/>
+                    <path d="M 45 75 L 48 85 L 50 80 L 52 85 L 55 75 Z" fill="#e74c3c"/>
+                </svg>
+            `,
+            
+            // 🍀 КЛЕВЕР
+            clover: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <circle cx="35" cy="35" r="18" fill="${color}"/>
+                    <circle cx="65" cy="35" r="18" fill="${color}"/>
+                    <circle cx="35" cy="65" r="18" fill="${color}"/>
+                    <circle cx="65" cy="65" r="18" fill="${color}"/>
+                    <circle cx="35" cy="35" r="10" fill="${colorSecondary}" opacity="0.5"/>
+                    <circle cx="65" cy="35" r="10" fill="${colorSecondary}" opacity="0.5"/>
+                    <circle cx="35" cy="65" r="10" fill="${colorSecondary}" opacity="0.5"/>
+                    <circle cx="65" cy="65" r="10" fill="${colorSecondary}" opacity="0.5"/>
+                    <path d="M 50 50 L 60 90" stroke="#27ae60" stroke-width="3"/>
+                    <circle cx="50" cy="50" r="4" fill="#16a085"/>
+                </svg>
+            `,
+            
+            // 🏆 КУБОК
+            trophy: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <path d="M 30 20 L 30 45 Q 30 65 50 65 Q 70 65 70 45 L 70 20 Z" fill="${color}" stroke="${colorSecondary}" stroke-width="2"/>
+                    <path d="M 30 25 Q 15 25 15 40 Q 15 50 30 50" fill="none" stroke="${colorSecondary}" stroke-width="3"/>
+                    <path d="M 70 25 Q 85 25 85 40 Q 85 50 70 50" fill="none" stroke="${colorSecondary}" stroke-width="3"/>
+                    <rect x="45" y="65" width="10" height="15" fill="${colorSecondary}"/>
+                    <path d="M 30 80 L 30 90 L 70 90 L 70 80 Q 70 75 50 75 Q 30 75 30 80 Z" fill="${color}" stroke="${colorSecondary}" stroke-width="2"/>
+                    <text x="50" y="45" font-size="18" text-anchor="middle" fill="#fff" font-weight="bold">★</text>
+                </svg>
+            `,
+            
+            // 🎁 ПОДАРОК
+            gift: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <rect x="20" y="40" width="60" height="45" rx="3" fill="${color}" stroke="${colorSecondary}" stroke-width="2"/>
+                    <rect x="15" y="35" width="70" height="12" rx="3" fill="${colorSecondary}"/>
+                    <rect x="45" y="35" width="10" height="50" fill="${colorSecondary}"/>
+                    <path d="M 50 35 Q 35 35 35 25 Q 35 15 45 15 Q 50 20 50 35 Z" fill="${color}"/>
+                    <path d="M 50 35 Q 65 35 65 25 Q 65 15 55 15 Q 50 20 50 35 Z" fill="${color}"/>
+                    <circle cx="50" cy="28" r="4" fill="${colorSecondary}"/>
+                </svg>
+            `,
+            
+            // 💍 КОЛЬЦО
+            ring: `
+                <svg viewBox="0 0 100 100" class="gift-shape">
+                    <ellipse cx="50" cy="65" rx="25" ry="22" fill="none" stroke="${color}" stroke-width="6"/>
+                    <ellipse cx="50" cy="65" rx="25" ry="22" fill="none" stroke="${colorSecondary}" stroke-width="1" opacity="0.5"/>
+                    <polygon points="50,20 60,35 50,50 40,35" fill="#5dade2" stroke="#2874a6" stroke-width="1.5"/>
+                    <polygon points="50,20 55,35 50,42 45,35" fill="#fff" opacity="0.5"/>
+                    <circle cx="47" cy="27" r="2" fill="#fff" opacity="0.8"/>
+                </svg>
+            `
+        };
+        
+        return shapes[form] || shapes.gift;
+    }
+
+    // Хелпер — вставить SVG формы в контейнер
+    function renderGiftShape(container, form, color, colorSecondary, size) {
+        const svg = getGiftShape(form, color, colorSecondary);
+        container.innerHTML = svg;
+        
+        const svgEl = container.querySelector('svg');
+        if (svgEl && size) {
+            svgEl.style.width = size + 'px';
+            svgEl.style.height = size + 'px';
+        }
+    }
+    // ============ ЗВЁЗДЫ (JS) ============
+    let currentStars = 0;
+    let starsHistory = [];
+
+    // Загрузить баланс звёзд
+    async function loadStars() {
+        try {
+            const res = await fetch(API_URL + '/stars/balance', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            currentStars = data.stars || 0;
+            updateStarsDisplay();
+        } catch (e) {
+            console.error('Ошибка загрузки звёзд:', e);
+        }
+    }
+
+    // Обновить все отображения звёзд
+    function updateStarsDisplay() {
+        // Сайдбар (ПК)
+        const sidebarStars = document.getElementById('sidebarStars');
+        if (sidebarStars) {
+            sidebarStars.textContent = currentStars > 999 ? '999+' : currentStars;
+        }
+        
+        // Профиль (телефон)
+        const profileStars = document.getElementById('profileStarsValue');
+        if (profileStars) {
+            profileStars.textContent = currentStars + ' звёзд';
+        }
+    }
+
+    // Открыть кошелёк
+    async function openWallet() {
+        await loadStars();
+        renderWallet();
+        openModal('walletModal');
+    }
+
+    // Отрисовать кошелёк
+    async function renderWallet() {
+        const container = document.getElementById('walletModalContent');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="modal-title">⭐ Кошелёк</div>
+            
+            <div class="wallet-card">
+                <div class="wallet-title">Ваш баланс</div>
+                <div class="wallet-balance">
+                    <span class="star-big">⭐</span>
+                    <span>${currentStars}</span>
+                </div>
+                <div class="wallet-stats">
+                    <div class="wallet-stat">
+                        <div class="wallet-stat-value" id="walletEarned">-</div>
+                        <div class="wallet-stat-label">Заработано</div>
+                    </div>
+                    <div class="wallet-stat">
+                        <div class="wallet-stat-value" id="walletSpent">-</div>
+                        <div class="wallet-stat-label">Потрачено</div>
+                    </div>
+                </div>
+                <div class="wallet-actions">
+                    <button class="wallet-btn primary" onclick="claimDailyBonus()" id="dailyBonusBtn">
+                        🎁 Бонус дня
+                    </button>
+                    <button class="wallet-btn" onclick="showStarsHistory()">
+                        📜 История
+                    </button>
+                </div>
+                <div class="wallet-actions">
+                    <button class="wallet-btn" onclick="showStarsTop()">
+                        🏆 Топ
+                    </button>
+                    <button class="wallet-btn" onclick="openShop()">
+                        🛒 Магазин
+                    </button>
+                </div>
+            </div>
+            
+            <button class="modal-btn cancel" onclick="closeModal('walletModal')">Закрыть</button>
+        `;
+
+        // Загрузить детали
+        try {
+            const res = await fetch(API_URL + '/stars/balance', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            const earned = document.getElementById('walletEarned');
+            const spent = document.getElementById('walletSpent');
+            if (earned) earned.textContent = data.totalEarned || 0;
+            if (spent) spent.textContent = data.totalSpent || 0;
+        } catch (e) {}
+
+        // Проверить доступность бонуса
+        checkDailyBonus();
+    }
+
+    // Проверить бонус дня
+    async function checkDailyBonus() {
+        try {
+            const res = await fetch(API_URL + '/stars/daily-status', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            const btn = document.getElementById('dailyBonusBtn');
+            if (!btn) return;
+            
+            if (data.available) {
+                btn.disabled = false;
+                btn.textContent = '🎁 Получить +10 ⭐';
+            } else {
+                btn.disabled = true;
+                btn.textContent = `⏳ Через ${data.hoursLeft} ч.`;
+            }
+        } catch (e) {}
+    }
+
+    // Получить ежедневный бонус
+    async function claimDailyBonus() {
+        try {
+            const res = await fetch(API_URL + '/stars/daily', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                currentStars = data.stars;
+                updateStarsDisplay();
+                showToast('🎁 +' + data.bonus + ' звёзд!');
+                renderWallet();
+            } else {
+                showToast(data.error || 'Ошибка');
+            }
+        } catch (e) {
+            showToast('Ошибка');
+        }
+    }
+
+    // История транзакций
+    async function showStarsHistory() {
+        try {
+            const res = await fetch(API_URL + '/stars/history?limit=50', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            starsHistory = data.transactions || [];
+
+            const container = document.getElementById('walletModalContent');
+            container.innerHTML = `
+                <div class="modal-title">📜 История звёзд</div>
+                <div style="max-height: 500px; overflow-y: auto; margin: 0 -22px;">
+                    ${starsHistory.length === 0 
+                        ? '<div class="loading">Нет транзакций</div>'
+                        : starsHistory.map(t => {
+                            const isPositive = t.amount > 0;
+                            const isIncoming = t.to && t.to._id === currentUser.id;
+                            
+                            let title = '';
+                            let desc = t.description || '';
+                            
+                            if (t.type === 'admin_grant') {
+                                title = isIncoming ? '⭐ Начислено создателем' : '⭐ Списано создателем';
+                            } else if (t.type === 'bonus_daily') {
+                                title = '🎁 Ежедневный бонус';
+                            } else if (t.type === 'gift_purchase') {
+                                title = '🎁 Покупка подарка';
+                            } else {
+                                title = '⭐ Транзакция';
+                            }
+                            
+                            return `
+                                <div class="star-transaction">
+                                    <div class="star-transaction-icon">⭐</div>
+                                    <div class="star-transaction-info">
+                                        <div class="star-transaction-title">${escapeHtml(title)}</div>
+                                        <div class="star-transaction-desc">${escapeHtml(desc)}</div>
+                                    </div>
+                                    <div class="star-transaction-amount ${isPositive ? 'positive' : 'negative'}">
+                                        ${isPositive ? '+' : ''}${t.amount}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                </div>
+                <button class="modal-btn cancel" onclick="renderWallet()">← Назад</button>
+            `;
+        } catch (e) {
+            showToast('Ошибка загрузки');
+        }
+    }
+
+    // Топ пользователей по звёздам
+    async function showStarsTop() {
+        try {
+            const res = await fetch(API_URL + '/stars/top', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const users = data.users || [];
+
+            const container = document.getElementById('walletModalContent');
+            container.innerHTML = `
+                <div class="modal-title">🏆 Топ по звёздам</div>
+                <div style="max-height: 500px; overflow-y: auto; margin: 0 -22px;">
+                    ${users.length === 0 
+                        ? '<div class="loading">Нет данных</div>'
+                        : users.map((u, i) => {
+                            const rank = i + 1;
+                            const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+                            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+                            
+                            const avatarContent = u.avatar 
+                                ? `<img src="${u.avatar}">` 
+                                : (u.emoji || '🐀');
+                            
+                            return `
+                                <div class="star-top-item">
+                                    <div class="star-top-rank ${rankClass}">${medal}</div>
+                                    <div class="star-top-avatar">${avatarContent}</div>
+                                    <div class="star-top-name">${escapeHtml(u.username)}</div>
+                                    <div class="star-top-balance">
+                                        ⭐ ${u.stars || 0}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                </div>
+                <button class="modal-btn cancel" onclick="renderWallet()">← Назад</button>
+            `;
+        } catch (e) {
+            showToast('Ошибка загрузки');
+        }
+    }
+
+    // Выдать звёзды (только создатель)
+    async function giveStarsToUser() {
+        if (currentUser.role !== 'CREATOR' && currentUser.role !== 'ADMIN') {
+            return showToast('Только создатель может выдавать');
+        }
+
+        const container = document.getElementById('settingsModalContent');
+        if (!container) return;
+
+        // Загрузить список пользователей
+        try {
+            const res = await fetch(API_URL + '/admin/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const users = data.users || [];
+
+            container.innerHTML = `
+                <div class="modal-title">⭐ Выдать звёзды</div>
+                <input type="text" class="modal-input" id="giveStarsSearch" placeholder="Поиск по @username" oninput="filterGiveStarsUsers(this.value)">
+                <div class="profile-section" style="margin: 10px -22px; max-height: 400px; overflow-y: auto;" id="giveStarsUsersList">
+                    ${users.filter(u => u._id !== currentUser.id).map(u => `
+                        <div class="profile-item" onclick="giveStarsDialog('${u._id}', '${escapeHtml(u.username)}')" style="cursor:pointer;" data-username="${escapeHtml(u.username.toLowerCase())}">
+                            <span class="icon">${u.emoji || '🐀'}</span>
+                            <div class="profile-item-content">
+                                <div class="profile-item-title">${escapeHtml(u.username)}</div>
+                                <div style="font-size:11px;color:#707579;">⭐ ${u.stars || 0} звёзд</div>
+                            </div>
+                            <span class="arrow">›</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="modal-btn cancel" onclick="closeModal('settingsModal')">Закрыть</button>
+            `;
+        } catch (e) {
+            showToast('Ошибка загрузки');
+        }
+    }
+
+    // Фильтр пользователей для выдачи звёзд
+    function filterGiveStarsUsers(query) {
+        const items = document.querySelectorAll('#giveStarsUsersList .profile-item');
+        const q = query.toLowerCase();
+        items.forEach(item => {
+            const username = item.getAttribute('data-username') || '';
+            item.style.display = username.includes(q) ? 'flex' : 'none';
+        });
+    }
+
+    // Диалог выдачи звёзд
+    async function giveStarsDialog(userId, username) {
+        const amount = prompt(`Сколько звёзд выдать ${username}?\n\nПоложительное число — начислить.\nОтрицательное — списать.`, '50');
+        if (!amount) return;
+
+        const num = parseInt(amount);
+        if (isNaN(num) || num === 0) {
+            return showToast('Введите число');
+        }
+
+        const description = prompt('Причина (необязательно):') || 'Начислено создателем';
+
+        try {
+            const res = await fetch(API_URL + '/stars/give', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ userId, amount: num, description })
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                showToast(`⭐ ${num > 0 ? '+' : ''}${num} звёзд выдано`);
+            } else {
+                showToast(data.error || 'Ошибка');
+            }
+        } catch (e) {
+            showToast('Ошибка');
+        }
+    }
+
+    // Начисление за пост (можно вызывать при создании поста)
+    async function rewardForPost() {
+        // TODO: В будущем — автоматически начислять за посты
+    }
+    // ============ МАГАЗИН ПОДАРКОВ (JS) ============
+    let giftForms = [];
+    let selectedGift = null;
+    let selectedRecipient = null;
+
+    // Открыть магазин
+    async function openShop() {
+        closeModal('walletModal');
+        await loadGiftForms();
+        renderShop();
+        openModal('shopModal');
+    }
+
+    // Загрузить формы подарков
+    async function loadGiftForms() {
+        try {
+            const res = await fetch(API_URL + '/gift-forms', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            giftForms = data.forms || [];
+        } catch (e) {
+            console.error('Ошибка загрузки форм:', e);
+            giftForms = [];
+        }
+    }
+
+    // Отрисовать магазин
+    function renderShop() {
+        const grid = document.getElementById('shopGrid');
+        if (!grid) return;
+
+        if (giftForms.length === 0) {
+            grid.innerHTML = '<div class="loading" style="grid-column: 1/-1;">Загрузка...</div>';
+            return;
+        }
+
+        grid.innerHTML = giftForms.map(g => {
+            const shape = getGiftShape(g.form, g.color, g.colorSecondary);
+            const animClass = 'shape-' + (g.animation || 'bounce');
+            
+            return `
+                <div class="shop-card ${g.rarity}" onclick="openGiftViewer('${g._id}')">
+                    <div class="shop-card-rarity ${g.rarity}">${g.rarity}</div>
+                    <div class="shop-card-shape ${animClass}">
+                        ${shape}
+                    </div>
+                    <div class="shop-card-name">${escapeHtml(g.name)}</div>
+                    <div class="shop-card-price">
+                        <span class="star">⭐</span>
+                        <span>${g.price}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Просмотр подарка крупно
+    function openGiftViewer(giftId) {
+        const gift = giftForms.find(g => g._id === giftId);
+        if (!gift) return;
+
+        selectedGift = gift;
+
+        const shape = getGiftShape(gift.form, gift.color, gift.colorSecondary);
+        const animClass = 'shape-' + (gift.animation || 'bounce');
+
+        document.getElementById('giftViewerShape').innerHTML = shape;
+        document.getElementById('giftViewerShape').className = 'gift-viewer-shape ' + animClass;
+        document.getElementById('giftViewerTitle').textContent = gift.name;
+        document.getElementById('giftViewerDesc').textContent = gift.description || '';
+        document.getElementById('giftViewerPrice').innerHTML = `
+            <span>⭐</span>
+            <span>${gift.price}</span>
+        `;
+
+        // Проверить баланс
+        const buyBtn = document.getElementById('giftViewerBuyBtn');
+        if (currentStars < gift.price) {
+            buyBtn.disabled = true;
+            buyBtn.textContent = `❌ Нужно ещё ${gift.price - currentStars} ⭐`;
+            buyBtn.style.opacity = '0.6';
+        } else {
+            buyBtn.disabled = false;
+            buyBtn.textContent = '🎁 Купить и подарить';
+            buyBtn.style.opacity = '1';
+        }
+
+        // Обработчик на кнопку
+        buyBtn.onclick = () => buyGift(gift);
+
+        document.getElementById('giftViewer').classList.add('show');
+    }
+
+    // Закрыть просмотр подарка
+    function closeGiftViewer() {
+        document.getElementById('giftViewer').classList.remove('show');
+        selectedGift = null;
+    }
+
+    // Начать покупку — открыть выбор получателя
+    async function buyGift(gift) {
+        if (!gift) return;
+        if (currentStars < gift.price) {
+            return showToast(`Недостаточно звёзд. Нужно ${gift.price}, у вас ${currentStars}`);
+        }
+
+        closeGiftViewer();
+        closeModal('shopModal');
+        await chooseRecipient(gift);
+    }
+
+    // Выбор получателя
+    async function chooseRecipient(gift) {
+        selectedGift = gift;
+        selectedRecipient = null;
+
+        // Загрузить список пользователей
+        try {
+            const res = await fetch(API_URL + '/contacts', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const contacts = data.contacts || [];
+
+            // Также загрузим всех пользователей через поиск
+            const allRes = await fetch(API_URL + '/users/search?q=a', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const allData = await allRes.json();
+            const allUsers = allData.users || [];
+
+            // Объединить контакты и всех пользователей, исключая себя
+            const combined = [...contacts, ...allUsers]
+                .filter(u => u._id !== currentUser.id)
+                .filter((u, i, arr) => arr.findIndex(x => x._id === u._id) === i);
+
+            renderRecipientsList(combined);
+            openModal('chooseRecipientModal');
+        } catch (e) {
+            showToast('Ошибка загрузки');
+        }
+    }
+
+    // Отрисовать список получателей
+    function renderRecipientsList(users) {
+        const list = document.getElementById('recipientsList');
+        if (!list) return;
+
+        if (users.length === 0) {
+            list.innerHTML = '<div class="loading">Нет пользователей</div>';
+            return;
+        }
+
+        list.innerHTML = users.map(u => {
+            const avatarContent = u.avatar 
+                ? `<img src="${u.avatar}">` 
+                : (u.emoji || '🐀');
+            
+            return `
+                <div class="user-result" onclick="selectRecipient('${u._id}', '${escapeHtml(u.username)}')" data-username="${escapeHtml(u.username.toLowerCase())}">
+                    <div class="user-result-avatar">${avatarContent}</div>
+                    <div class="user-result-info">
+                        <div class="user-result-name">${escapeHtml(u.username)}</div>
+                        <div class="user-result-username">@${escapeHtml(u.username)}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Поиск получателей
+    function searchRecipients(query) {
+        const items = document.querySelectorAll('#recipientsList .user-result');
+        const q = query.toLowerCase();
+        items.forEach(item => {
+            const username = item.getAttribute('data-username') || '';
+            item.style.display = username.includes(q) ? 'flex' : 'none';
+        });
+    }
+
+    // Выбрать получателя → отправить подарок
+    async function selectRecipient(userId, username) {
+        if (!selectedGift) return;
+
+        const message = prompt(`Отправить подарок "${selectedGift.name}" пользователю ${username}?\n\nСообщение (необязательно):`) || '';
+        
+        try {
+            const res = await fetch(API_URL + '/gift-forms/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    recipientId: userId,
+                    formId: selectedGift._id,
+                    message,
+                    isAnonymous: false
+                })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                closeModal('chooseRecipientModal');
+                currentStars = data.newBalance;
+                updateStarsDisplay();
+                showToast(`🎁 Подарок отправлен!`);
+                selectedGift = null;
+            } else {
+                showToast(data.error || 'Ошибка');
+            }
+        } catch (e) {
+            showToast('Ошибка отправки');
+        }
+    }
+
+    // Проверить новые подарки
+    async function checkForNewGifts() {
+        try {
+            const res = await fetch(API_URL + '/gift-forms/received', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const received = data.received || [];
+
+            // Найти новые подарки
+            const newGifts = received.filter(p => p.isNew);
+            
+            if (newGifts.length > 0) {
+                // Показать первый
+                showGiftReceived(newGifts[0]);
+            }
+        } catch (e) {
+            console.error('Ошибка проверки подарков:', e);
+        }
+    }
+
+    // Показать анимацию получения подарка
+    function showGiftReceived(purchase) {
+        if (!purchase || !purchase.form) return;
+
+        const gift = purchase.form;
+        const shape = getGiftShape(gift.form, gift.color, gift.colorSecondary);
+
+        // Заполнить
+        document.getElementById('giftReceivedShape').innerHTML = shape;
+        document.getElementById('giftReceivedShape').className = 'gift-received-shape shape-' + (gift.animation || 'float');
+        document.getElementById('giftReceivedTitle').textContent = '🎉 ' + gift.name;
+        document.getElementById('giftReceivedDesc').textContent = gift.description || '';
+        document.getElementById('giftReceivedMessage').textContent = purchase.message ? `"${purchase.message}"` : '';
+        
+        const buyerName = purchase.isAnonymous ? 'Аноним' : (purchase.buyer?.username || 'Неизвестный');
+        document.getElementById('giftReceivedFrom').textContent = 'От: ' + buyerName;
+
+        // Конфетти
+        const confettiContainer = document.getElementById('giftReceivedConfetti');
+        confettiContainer.innerHTML = '';
+        const colors = ['#f04747', '#faa61a', '#43b581', '#7289da', '#9b59b6', '#e91e63', '#f4c542'];
+        for (let i = 0; i < 50; i++) {
+            const conf = document.createElement('div');
+            conf.className = 'confetti';
+            conf.style.left = Math.random() * 100 + '%';
+            conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            conf.style.animationDelay = Math.random() * 2 + 's';
+            conf.style.animationDuration = (2 + Math.random() * 2) + 's';
+            confettiContainer.appendChild(conf);
+        }
+
+        document.getElementById('giftReceivedAnim').classList.add('show');
+
+        // Отметить как просмотренное
+        fetch(API_URL + `/gift-forms/${purchase._id}/view`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).catch(() => {});
+    }
+
+    // Закрыть анимацию получения
+    function closeGiftReceived() {
+        document.getElementById('giftReceivedAnim').classList.remove('show');
+    }
+
+    // Показать детали подарка (из профиля)
+    function showGiftDetails(giftId) {
+        // Этот подарок уже показан — заглушка
+        showToast('Подарок открыт');
+    }
+
+    // Открыть "Мои покупки"
+    async function showMyPurchases() {
+        try {
+            const res = await fetch(API_URL + '/gift-forms/my-purchases', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const purchases = data.purchases || [];
+
+            const container = document.getElementById('walletModalContent');
+            container.innerHTML = `
+                <div class="modal-title">📤 Мои отправленные</div>
+                <div style="max-height: 500px; overflow-y: auto; margin: 0 -22px;">
+                    ${purchases.length === 0 
+                        ? '<div class="loading">Вы ещё не отправляли подарков</div>'
+                        : purchases.map(p => {
+                            const shape = getGiftShape(p.form.form, p.form.color, p.form.colorSecondary);
+                            return `
+                                <div class="star-transaction">
+                                    <div style="width: 40px; height: 40px; flex-shrink: 0;">${shape}</div>
+                                    <div class="star-transaction-info">
+                                        <div class="star-transaction-title">${escapeHtml(p.form.name)}</div>
+                                        <div class="star-transaction-desc">
+                                            Кому: ${escapeHtml(p.recipient?.username || '?')}
+                                        </div>
+                                    </div>
+                                    <div class="star-transaction-amount negative">-${p.pricePaid} ⭐</div>
+                                </div>
+                            `;
+                        }).join('')}
+                </div>
+                <button class="modal-btn cancel" onclick="renderWallet()">← Назад</button>
+            `;
+
+            openModal('walletModal');
+        } catch (e) {
+            showToast('Ошибка загрузки');
+        }
+    }
+
+    // Открыть "Мои полученные"
+    async function showMyReceived() {
+        try {
+            const res = await fetch(API_URL + '/gift-forms/received', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const received = data.received || [];
+
+            const container = document.getElementById('walletModalContent');
+            container.innerHTML = `
+                <div class="modal-title">📥 Мои полученные</div>
+                <div style="max-height: 500px; overflow-y: auto; margin: 0 -22px;">
+                    ${received.length === 0 
+                        ? '<div class="loading">Вам ещё не дарили подарков</div>'
+                        : received.map(p => {
+                            const shape = getGiftShape(p.form.form, p.form.color, p.form.colorSecondary);
+                            return `
+                                <div class="star-transaction" onclick="showGiftReceived(${JSON.stringify(p).replace(/"/g, '&quot;')})" style="cursor:pointer;">
+                                    <div style="width: 40px; height: 40px; flex-shrink: 0;">${shape}</div>
+                                    <div class="star-transaction-info">
+                                        <div class="star-transaction-title">${escapeHtml(p.form.name)}</div>
+                                        <div class="star-transaction-desc">
+                                            От: ${p.isAnonymous ? 'Аноним' : escapeHtml(p.buyer?.username || '?')}
+                                        </div>
+                                    </div>
+                                    ${p.isNew ? '<div style="background:#e53935;color:white;font-size:10px;padding:2px 6px;border-radius:8px;">NEW</div>' : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                </div>
+                <button class="modal-btn cancel" onclick="renderWallet()">← Назад</button>
+            `;
+
+            openModal('walletModal');
+        } catch (e) {
+            showToast('Ошибка загрузки');
+        }
+    }
+    // ============ ПАПКИ ЧАТОВ (JS) ============
+    let folders = [];
+    let activeFolder = null;
+    let currentChatView = 'all';
+
+    // Загрузить папки
+    async function loadFolders() {
+        try {
+            const res = await fetch(API_URL + '/folders', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            folders = data.folders || [];
+            renderFolders();
+        } catch (e) {
+            console.error('Ошибка загрузки папок:', e);
+            folders = [];
+        }
+    }
+
+    // Отрисовать папки в сайдбаре (ПК)
+    function renderFolders() {
+        const list = document.getElementById('foldersList');
+        const container = document.getElementById('sidebarFolders');
+        
+        if (!list || !container) return;
+        
+        // Показать папки только на странице чатов
+        if (currentPage === 'chats') {
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+
+        if (folders.length === 0) {
+            list.innerHTML = '<div style="font-size:12px;color:#a2acb4;text-align:center;padding:8px;">Нет папок</div>';
+            return;
+        }
+
+        list.innerHTML = folders.map(f => `
+            <div class="folder-item" onclick="switchFolder('${f._id}')" style="padding:8px 10px;border-radius:8px;${activeFolder === f._id ? 'background: var(--tg-active);' : ''}">
+                <span class="folder-emoji" style="font-size:18px;width:24px;">${f.emoji || '📁'}</span>
+                <div class="folder-info">
+                    <div class="folder-name" style="font-size:13px;">${escapeHtml(f.name)}</div>
+                    <div class="folder-count" style="font-size:11px;">${(f.chats || []).length} чатов</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Переключиться на папку
+    async function switchFolder(folderId) {
+        if (activeFolder === folderId) {
+            activeFolder = null;
+        } else {
+            activeFolder = folderId;
+        }
+        
+        renderFolders();
+        await loadChats();  // Перезагрузить чаты (с учётом фильтра)
+    }
+
+    // Открыть диалог создания папки
+    function openCreateFolder() {
+        const name = prompt('Название папки (1-30 символов):');
+        if (!name || name.trim().length === 0) return;
+        
+        if (name.length > 30) {
+            return showToast('Максимум 30 символов');
+        }
+        
+        const emoji = prompt('Эмодзи для папки (по желанию):', '📁') || '📁';
+        
+        createFolder(name.trim(), emoji);
+    }
+
+    // Создать папку
+    async function createFolder(name, emoji) {
+        try {
+            const res = await fetch(API_URL + '/folders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, emoji })
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                showToast('📁 Папка создана');
+                await loadFolders();
+            } else {
+                showToast(data.error || 'Ошибка');
+            }
+        } catch (e) {
+            showToast('Ошибка создания');
+        }
+    }
+
+    // Удалить папку
+    async function deleteFolder(folderId) {
+        if (!confirm('Удалить папку?')) return;
+        
+        try {
+            const res = await fetch(API_URL + `/folders/${folderId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (res.ok) {
+                showToast('🗑️ Папка удалена');
+                if (activeFolder === folderId) activeFolder = null;
+                await loadFolders();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Ошибка');
+            }
+        } catch (e) {
+            showToast('Ошибка удаления');
+        }
+    }
+
+    // Переименовать папку
+    async function renameFolder(folderId) {
+        const folder = folders.find(f => f._id === folderId);
+        if (!folder) return;
+        
+        const newName = prompt('Новое название:', folder.name);
+        if (!newName || newName === folder.name) return;
+        
+        try {
+            const res = await fetch(API_URL + `/folders/${folderId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name: newName.trim(), emoji: folder.emoji })
+            });
+            
+            if (res.ok) {
+                showToast('✏️ Папка переименована');
+                await loadFolders();
+            }
+        } catch (e) {
+            showToast('Ошибка');
+        }
+    }
+
+    // Показать список папок (полный экран)
+    async function openFoldersManager() {
+        await loadFolders();
+        
+        const container = document.getElementById('settingsModalContent');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="modal-title">📁 Папки чатов</div>
+            <div class="folders-list">
+                ${folders.map(f => `
+                    <div class="folder-item">
+                        <span class="folder-emoji">${f.emoji || '📁'}</span>
+                        <div class="folder-info">
+                            <div class="folder-name">${escapeHtml(f.name)}</div>
+                            <div class="folder-count">${(f.chats || []).length} чатов${f.isDefault ? ' · системная' : ''}</div>
+                        </div>
+                        ${!f.isDefault ? `
+                            <button onclick="event.stopPropagation(); renameFolder('${f._id}')" style="background:none;border:none;color:var(--tg-blue);font-size:18px;cursor:pointer;padding:4px;">✏️</button>
+                            <button onclick="event.stopPropagation(); deleteFolder('${f._id}')" style="background:none;border:none;color:var(--tg-red);font-size:18px;cursor:pointer;padding:4px;">🗑️</button>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+            <button class="modal-btn" onclick="openCreateFolder()">＋ Создать папку</button>
+            <button class="modal-btn cancel" onclick="closeModal('settingsModal')">Закрыть</button>
+        `;
+        
+        openModal('settingsModal');
+    }
+
+    // Переключить вкладку чатов (Все / Новые / Личные / Группы)
+    async function switchChatsTab(view) {
+        currentChatView = view;
+        
+        // Обновить активную вкладку
+        document.querySelectorAll('.chats-tab').forEach(t => t.classList.remove('active'));
+        const activeTab = document.querySelector(`.chats-tab[data-view="${view}"]`);
+        if (activeTab) activeTab.classList.add('active');
+        
+        // Загрузить чаты с фильтром
+        await loadFilteredChats(view);
+    }
+
+    // Загрузить чаты с фильтром
+    async function loadFilteredChats(view) {
+        try {
+            const res = await fetch(API_URL + `/chats/filtered/${view}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            allChats = data.chats || [];
+            renderChatList(allChats);
+            
+            // Если ПК — обновить и сайдбар
+            if (window.innerWidth >= 768) {
+                renderSidebarChats();
+            }
+        } catch (e) {
+            console.error('Ошибка загрузки чатов:', e);
+        }
+    }
+    // ============ ВКЛАДКИ ПОИСКА (JS) ============
+    let currentSearchTab = 'chats';
+    let searchResults = {};
+
+    // Показать поле поиска
+    function showSearchInput() {
+        const searchTabs = document.getElementById('searchTabs');
+        if (searchTabs) {
+            searchTabs.style.display = 'flex';
+        }
+    }
+
+    // Скрыть поле поиска
+    function hideSearchInput() {
+        const searchTabs = document.getElementById('searchTabs');
+        if (searchTabs) {
+            searchTabs.style.display = 'none';
+        }
+    }
+
+    // Переключить вкладку поиска
+    async function switchSearchTab(tab) {
+        currentSearchTab = tab;
+        
+        // Обновить активную вкладку
+        document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
+        const activeTab = document.querySelector(`.search-tab[data-tab="${tab}"]`);
+        if (activeTab) activeTab.classList.add('active');
+        
+        // Если есть поисковый запрос — повторить поиск
+        const desktopSearch = document.getElementById('desktopSearch');
+        if (desktopSearch && desktopSearch.value.length >= 2) {
+            await performSearch(desktopSearch.value);
+        }
+    }
+
+    // Выполнить поиск
+    async function performSearch(query) {
+        if (!query || query.length < 2) {
+            return;
+        }
+
+        try {
+            // Поиск пользователей
+            const usersRes = await fetch(API_URL + `/users/search?q=${encodeURIComponent(query)}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const usersData = await usersRes.json();
+            
+            searchResults = {
+                chats: usersData.users || [],
+                channels: [],
+                posts: [],
+                photos: [],
+                videos: [],
+                files: [],
+                links: [],
+                music: [],
+                voice: []
+            };
+            
+            renderSearchResults(searchResults, currentSearchTab);
+        } catch (e) {
+            console.error('Ошибка поиска:', e);
+        }
+    }
+
+    // Отрисовать результаты поиска
+    function renderSearchResults(results, tab) {
+        const list = results[tab] || [];
+        
+        // Найти контейнер для результатов — используем chatList
+        const container = document.getElementById('chatList');
+        if (!container) return;
+
+        if (list.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">🔍</div>
+                    <div class="title">Ничего не найдено</div>
+                    <div class="text">Попробуйте другой запрос</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Показать результаты в зависимости от вкладки
+        if (tab === 'chats' || tab === 'channels') {
+            container.innerHTML = list.map(u => {
+                const avatarContent = u.avatar 
+                    ? `<img src="${u.avatar}">` 
+                    : (u.emoji || '🐀');
+                
+                return `
+                    <div class="user-result" onclick="openDirectChat('${u._id}', '${escapeHtml(u.username)}')">
+                        <div class="user-result-avatar">${avatarContent}</div>
+                        <div class="user-result-info">
+                            <div class="user-result-name">${escapeHtml(u.username)}</div>
+                            <div class="user-result-username">@${escapeHtml(u.username)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <div class="title">Ничего нет</div>
+                    <div class="text">Пока нет ${tab === 'photos' ? 'фото' : tab === 'videos' ? 'видео' : 'файлов'}</div>
+                </div>
+            `;
+        }
+    }
+
+    // ============ ТЁМНАЯ ТЕМА (JS) ============
+    let darkThemeEnabled = false;
+
+    // Загрузить настройку тёмной темы
+    async function loadDarkTheme() {
+        try {
+            const res = await fetch(API_URL + '/interface', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const ui = data.interface || {};
+            
+            darkThemeEnabled = ui.darkMode || false;
+            
+            // Применить тему
+            applyDarkTheme(darkThemeEnabled);
+            
+            // Обновить переключатель в сайдбаре
+            const darkSwitch = document.getElementById('darkThemeSwitch');
+            if (darkSwitch) {
+                darkSwitch.checked = darkThemeEnabled;
+            }
+        } catch (e) {
+            console.error('Ошибка загрузки темы:', e);
+        }
+    }
+
+    // Применить тёмную тему
+    function applyDarkTheme(enabled) {
+        if (enabled) {
+            document.body.classList.add('dark-theme');
+        } else {
+            document.body.classList.remove('dark-theme');
+        }
+        darkThemeEnabled = enabled;
+    }
+
+    // Переключить тёмную тему
+    async function toggleDarkTheme(enabled) {
+        applyDarkTheme(enabled);
+        
+        // Сохранить на сервере
+        try {
+            await fetch(API_URL + '/interface', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ darkMode: enabled, theme: enabled ? 'night' : 'day' })
+            });
+        } catch (e) {
+            console.error('Ошибка сохранения темы:', e);
+        }
+        
+        // Обновить переключатель в профиле (если есть)
+        const profileSwitch = document.getElementById('profileDarkSwitch');
+        if (profileSwitch) {
+            profileSwitch.checked = enabled;
+        }
+        
+        showToast(enabled ? '🌙 Тёмная тема' : '☀️ Светлая тема');
+    }
+
+    // ============ ПЕРЕКЛЮЧЕНИЕ СТРАНИЦ (обновлённое) ============
+    const _originalSwitchPage = switchPage;
+    switchPage = function(page) {
+        _originalSwitchPage(page);
+        
+        // Показать/скрыть папки в сайдбаре
+        const foldersContainer = document.getElementById('sidebarFolders');
+        if (foldersContainer) {
+            if (page === 'chats' && window.innerWidth >= 768) {
+                foldersContainer.style.display = 'block';
+            } else {
+                foldersContainer.style.display = 'none';
+            }
+        }
+        
+        // Скрыть/показать вкладки поиска
+        const searchTabs = document.getElementById('searchTabs');
+        if (searchTabs) {
+            if (page === 'chats' && window.innerWidth >= 768) {
+                // Скрыто по умолчанию
+            } else {
+                searchTabs.style.display = 'none';
+            }
+        }
+    };
+
+    // ============ ОБНОВЛЕНИЕ ПРИ ВХОДЕ ============
+    // Добавим загрузку темы
+    async function enterAppEnhanced() {
+        // Сначала обычный вход
+        await enterApp();
+        
+        // Потом загружаем настройки интерфейса
+        await loadDarkTheme();
+        
+        // Показать вкладки чатов
+        const chatsTabs = document.getElementById('chatsTabs');
+        if (chatsTabs) {
+            chatsTabs.style.display = 'flex';
+        }
+        
+        // Показать папки в сайдбаре (ПК)
+        const foldersContainer = document.getElementById('sidebarFolders');
+        if (foldersContainer && window.innerWidth >= 768) {
+            foldersContainer.style.display = 'block';
+        }
+    }
+
+    // Переопределяем enterApp на расширенную версию
+    const _origEnterApp = enterApp;
+    enterApp = async function() {
+        await _origEnterApp();
+        await loadDarkTheme();
+    };
+    // ============ ФИНАЛЬНАЯ ИНТЕГРАЦИЯ ============
+
+    // 1. ОБНОВЛЕНИЕ ПРОФИЛЯ С КОШЕЛЬКОМ
+    const _origRenderProfile = renderProfile;
+    renderProfile = async function() {
+        await _origRenderProfile();
+        
+        // Добавить кошелёк в профиль (для мобильной версии)
+        const container = document.getElementById('profileContent');
+        if (!container) return;
+        
+        // Найти секцию профиля "Действия"
+        const actionsSections = container.querySelectorAll('.profile-section');
+        if (actionsSections.length === 0) return;
+        
+        // Найти секцию "Действия" (обычно последняя)
+        const actionsSection = actionsSections[actionsSections.length - 1];
+        
+        // Проверить, не добавлен ли уже кошелёк
+        if (actionsSection.querySelector('#profileStarsValue')) return;
+        
+        // Создать секцию кошелька
+        const walletSection = document.createElement('div');
+        walletSection.className = 'profile-section';
+        walletSection.innerHTML = `
+            <div class="profile-section-title">⭐ Звёзды и подарки</div>
+            <div class="profile-item" onclick="openWallet()">
+                <span class="icon">⭐</span>
+                <div class="profile-item-content">
+                    <div class="profile-item-title">Кошелёк</div>
+                    <div class="profile-item-value" id="profileStarsValue">0 звёзд</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            <div class="profile-item" onclick="openShop()">
+                <span class="icon">🛒</span>
+                <div class="profile-item-content">
+                    <div class="profile-item-title">Магазин подарков</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            <div class="profile-item" onclick="showMyReceived()">
+                <span class="icon">📥</span>
+                <div class="profile-item-content">
+                    <div class="profile-item-title">Полученные подарки</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            <div class="profile-item" onclick="showMyPurchases()">
+                <span class="icon">📤</span>
+                <div class="profile-item-content">
+                    <div class="profile-item-title">Отправленные подарки</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            <div class="profile-item" onclick="openFoldersManager()">
+                <span class="icon">📁</span>
+                <div class="profile-item-content">
+                    <div class="profile-item-title">Мои папки</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+            <div class="theme-switch-row" style="border-top: 1px solid var(--tg-border);">
+                <div class="theme-switch-label">
+                    <span class="icon">🌙</span>
+                    <span>Тёмная тема</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="profileDarkSwitch" onchange="toggleDarkTheme(this.checked)">
+                    <span class="switch-slider"></span>
+                </label>
+            </div>
+        `;
+        
+        // Вставить перед секцией "Действия"
+        actionsSection.parentNode.insertBefore(walletSection, actionsSection);
+        
+        // Обновить значение звёзд
+        const profileStarsValue = document.getElementById('profileStarsValue');
+        if (profileStarsValue) {
+            profileStarsValue.textContent = currentStars + ' звёзд';
+        }
+        
+        // Обновить переключатель темы
+        const profileDarkSwitch = document.getElementById('profileDarkSwitch');
+        if (profileDarkSwitch) {
+            profileDarkSwitch.checked = darkThemeEnabled;
+        }
+    };
+
+    // 2. ОБНОВЛЕНИЕ НАСТРОЕК — КНОПКА "ВЫДАТЬ ЗВЁЗДЫ" (для создателя)
+    const _origOpenSettings = openSettings;
+    openSettings = function() {
+        _origOpenSettings();
+        
+        // Добавить кнопку "Выдать звёзды" для создателя
+        if (currentUser && (currentUser.role === 'CREATOR' || currentUser.role === 'ADMIN')) {
+            const container = document.getElementById('settingsModalContent');
+            if (!container) return;
+            
+            // Проверяем, не добавлена ли уже кнопка
+            if (container.querySelector('#giveStarsBtn')) return;
+            
+            // Найти кнопку "Закрыть" и вставить перед ней
+            const closeBtn = container.querySelector('.modal-btn.cancel');
+            if (closeBtn) {
+                const giveStarsBtn = document.createElement('button');
+                giveStarsBtn.className = 'modal-btn';
+                giveStarsBtn.id = 'giveStarsBtn';
+                giveStarsBtn.style.background = 'linear-gradient(135deg, #f4c542, #f39c12)';
+                giveStarsBtn.textContent = '⭐ Выдать звёзды';
+                giveStarsBtn.onclick = giveStarsToUser;
+                closeBtn.parentNode.insertBefore(giveStarsBtn, closeBtn);
+            }
+        }
+    };
+
+    // 3. АВТОПРОВЕРКА НОВЫХ ПОДАРКОВ (каждые 30 секунд)
+    function startGiftChecker() {
+        setInterval(async () => {
+            if (!token || !currentUser) return;
+            await checkForNewGifts();
+        }, 30000);
+    }
+
+    // 4. WEBSOCKET — МГНОВЕННЫЕ ОБНОВЛЕНИЯ
+    let socket = null;
+    function initSocket() {
+        if (typeof io === 'undefined') {
+            console.warn('Socket.IO не подключен');
+            return;
+        }
+        
+        try {
+            socket = io({
+                auth: { token }
+            });
+            
+            socket.on('connect', () => {
+                console.log('🔌 WebSocket подключен');
+                // Присоединиться ко всем чатам
+                allChats.forEach(chat => {
+                    socket.emit('join-chat', chat._id);
+                });
+            });
+            
+            // Новое сообщение
+            socket.on('new-message', (message) => {
+                if (currentChatId === message.chat) {
+                    // Перезагрузить сообщения, если открыт этот чат
+                    loadMessages(currentChatId);
+                }
+                // Обновить список чатов
+                loadChats();
+            });
+            
+            // Подарок получен
+            socket.on('gift-form-received', (data) => {
+                if (data.recipientId === currentUser.id) {
+                    showGiftReceived(data.purchase);
+                }
+            });
+            
+            socket.on('disconnect', () => {
+                console.log('🔌 WebSocket отключен');
+            });
+        } catch (e) {
+            console.error('Ошибка WebSocket:', e);
+        }
+    }
+
+    // 5. РАСШИРЕННАЯ ФУНКЦИЯ ВХОДА
+    const _origEnterAppFinal = enterApp;
+    enterApp = async function() {
+        await _origEnterAppFinal();
+        
+        // Запустить WebSocket
+        initSocket();
+        
+        // Запустить проверку подарков
+        startGiftChecker();
+        
+        // Показать вкладки чатов
+        const chatsTabs = document.getElementById('chatsTabs');
+        if (chatsTabs) {
+            chatsTabs.style.display = 'flex';
+        }
+        
+        // Показать папки в сайдбаре (ПК)
+        const foldersContainer = document.getElementById('sidebarFolders');
+        if (foldersContainer && window.innerWidth >= 768) {
+            foldersContainer.style.display = 'block';
+        }
+        
+        // Обновить отображение звёзд
+        updateStarsDisplay();
+    };
+
+    // 6. ОБРАБОТЧИК ИЗМЕНЕНИЯ РАЗМЕРА ОКНА
+    window.addEventListener('resize', () => {
+        const foldersContainer = document.getElementById('sidebarFolders');
+        if (foldersContainer) {
+            if (window.innerWidth >= 768 && currentPage === 'chats') {
+                foldersContainer.style.display = 'block';
+            } else {
+                foldersContainer.style.display = 'none';
+            }
+        }
+    });
+
+    // 7. АВТООБНОВЛЕНИЕ СПИСКА ЧАТОВ
+    setInterval(async () => {
+        if (!token || !currentUser) return;
+        if (currentPage === 'chats' && !currentChatId) {
+            await loadChats();
+        }
+    }, 15000);
+
+    // 8. ЗАКРЫТИЕ МОДАЛОК ПО ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show'));
+            const giftViewer = document.getElementById('giftViewer');
+            if (giftViewer) giftViewer.classList.remove('show');
+        }
+    });
+
+    // 9. КЛИК ПО ПРОФИЛЮ ПОЛЬЗОВАТЕЛЯ (открытие чужого профиля)
+    async function openUserProfile(userId) {
+        try {
+            const res = await fetch(API_URL + `/users/${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const user = data.user;
+            
+            if (!user) return showToast('Пользователь не найден');
+            
+            // Загрузить подарки пользователя
+            const giftsRes = await fetch(API_URL + `/gift-forms/user/${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const giftsData = await giftsRes.json();
+            const gifts = giftsData.gifts || [];
+            
+            const avatarContent = user.avatar 
+                ? `<img src="${user.avatar}">` 
+                : (user.emoji || '🐀');
+            
+            const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username;
+            
+            const container = document.getElementById('settingsModalContent');
+            container.innerHTML = `
+                <div style="text-align: center; padding: 20px 0;">
+                    <div class="profile-avatar-big" style="cursor: default;">
+                        ${avatarContent}
+                    </div>
+                    <div class="profile-name" style="margin-top: 15px;">${escapeHtml(fullName)}</div>
+                    <div class="profile-username">@${escapeHtml(user.username)}</div>
+                    <div style="font-size: 13px; color: #707579; margin-top: 10px;">
+                        ${user.isOnline ? '🟢 в сети' : '⚪ не в сети'}
+                    </div>
+                </div>
+                
+                ${gifts.length > 0 ? `
+                    <div class="profile-section" style="margin: 0 -22px;">
+                        <div class="profile-section-title">🎁 Подарки (${gifts.length})</div>
+                        <div class="gifts-grid" style="padding: 8px;">
+                            ${gifts.slice(0, 8).map(g => {
+                                const shape = getGiftShape(g.form.form, g.form.color, g.form.colorSecondary);
+                                return `<div class="shop-card ${g.form.rarity}" style="padding: 8px;">${shape}</div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <button class="modal-btn" onclick="closeModal('settingsModal'); openDirectChat('${user._id}', '${escapeHtml(user.username)}')">
+                    💬 Написать
+                </button>
+                <button class="modal-btn" onclick="closeModal('settingsModal'); buyGiftFor('${user._id}', '${escapeHtml(user.username)}')" style="background: linear-gradient(135deg, #f4c542, #f39c12);">
+                    🎁 Подарить
+                </button>
+                <button class="modal-btn cancel" onclick="closeModal('settingsModal')">Закрыть</button>
+            `;
+            
+            openModal('settingsModal');
+        } catch (e) {
+            showToast('Ошибка загрузки');
+        }
+    }
+
+    // Быстрая покупка для конкретного пользователя
+    async function buyGiftFor(userId, username) {
+        await loadGiftForms();
+        
+        if (giftForms.length === 0) {
+            return showToast('Магазин пуст');
+        }
+        
+        // Показать выбор подарка
+        const container = document.getElementById('settingsModalContent');
+        container.innerHTML = `
+            <div class="modal-title">🎁 Выберите подарок для ${escapeHtml(username)}</div>
+            <div class="shop-grid" style="margin: 0 -22px;">
+                ${giftForms.map(g => {
+                    const shape = getGiftShape(g.form, g.color, g.colorSecondary);
+                    return `
+                        <div class="shop-card ${g.rarity}" onclick="sendGiftDirect('${userId}', '${g._id}')">
+                            <div class="shop-card-rarity ${g.rarity}">${g.rarity}</div>
+                            <div class="shop-card-shape">${shape}</div>
+                            <div class="shop-card-name">${escapeHtml(g.name)}</div>
+                            <div class="shop-card-price"><span class="star">⭐</span>${g.price}</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            <button class="modal-btn cancel" onclick="closeModal('settingsModal')">Отмена</button>
+        `;
+    }
+
+    // Отправить подарок напрямую
+    async function sendGiftDirect(userId, giftId) {
+        if (!confirm('Отправить подарок?')) return;
+        
+        try {
+            const res = await fetch(API_URL + '/gift-forms/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    recipientId: userId,
+                    formId: giftId,
+                    message: ''
+                })
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                currentStars = data.newBalance;
+                updateStarsDisplay();
+                showToast('🎁 Подарок отправлен!');
+                closeModal('settingsModal');
+            } else {
+                showToast(data.error || 'Ошибка');
+            }
+        } catch (e) {
+            showToast('Ошибка отправки');
+        }
+    }
 
     // ============ ЗАПУСК ============
     checkAuth();
