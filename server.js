@@ -1,3 +1,4 @@
+
 const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
@@ -223,7 +224,6 @@ const UserInterface = mongoose.model('UserInterface', UserInterfaceSchema);
 // ============ ИНИЦИАЛИЗАЦИЯ ============
 async function initializeCreator() {
     try {
-        ...
         const creator = await User.findOne({ username: 'ShitRat_Creator' });
         if (!creator) {
             const hashed = await bcrypt.hash('ShitRat2024!', 12);
