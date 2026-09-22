@@ -803,19 +803,20 @@ app.post('/api/posts', authMiddleware, async (req, res) => {
     const post = new Post({ author: req.userId, content: content || '', image: image || null });
     await post.save();
     const populated = await Post.findById(post._id).populate('author', 'username emoji avatar');
-        res.status(201).json({ post: { 
-            _id: populated._id,
-            author: populated.author,
-            content: populated.content,
-            image: populated.image,
-            likes: populated.likes || [],
-            comments: populated.comments || [],
-            isPublic: populated.isPublic,
-            createdAt: populated.createdAt,
-            isLiked: false, 
-            likesCount: 0, 
-            commentsCount: 0 
-        } });
+res.status(201).json({ post: { 
+        _id: populated._id,
+        author: populated.author,
+        content: populated.content,
+        image: populated.image,
+        likes: populated.likes || [],
+        comments: populated.comments || [],
+        isPublic: populated.isPublic,
+        createdAt: populated.createdAt,
+        isLiked: false, 
+        likesCount: 0, 
+        commentsCount: 0 
+    } });
+});
 
 app.post('/api/posts/:postId/like', authMiddleware, async (req, res) => {
     const post = await Post.findById(req.params.postId);
@@ -1702,6 +1703,14 @@ app.get('/api/stars/user/:userId', authMiddleware, async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
+// ============ WEBSOCKET ============
+io.on('connection', (socket) => {
+    console.log('🔌 Подключение:', socket.id);
+    socket.on('join-chat', (chatId) => socket.join(chatId));
+    socket.on('leave-chat', (chatId) => socket.leave(chatId));
+    socket.on('disconnect', () => console.log('🔌 Отключение:', socket.id));
+});
+
 // ============ ЗАПУСК ============
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
