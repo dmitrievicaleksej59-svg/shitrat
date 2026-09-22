@@ -832,6 +832,635 @@
             .modal { align-items: center; }
             .modal-content { border-radius: 14px; }
         }
+        /* ============ ЗВЁЗДЫ (Telegram Stars) ============ */
+        .stars-balance {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #f4c542, #f39c12);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.15s;
+            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.35);
+        }
+        .stars-balance:active { transform: scale(0.95); }
+        .stars-balance .star-icon {
+            font-size: 16px;
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.6));
+        }
+
+        /* Анимация звезды */
+        @keyframes starSpin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.15); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        @keyframes starGlow {
+            0%, 100% { filter: drop-shadow(0 0 4px #f4c542); }
+            50% { filter: drop-shadow(0 0 16px #f4c542) drop-shadow(0 0 24px #f39c12); }
+        }
+        .star-anim-spin { animation: starSpin 4s linear infinite; display: inline-block; }
+        .star-anim-glow { animation: starGlow 2s ease-in-out infinite; display: inline-block; }
+
+        /* КОШЕЛЁК */
+        .wallet-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 25px;
+            color: white;
+            text-align: center;
+            margin: 15px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        .wallet-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            animation: walletShine 4s ease-in-out infinite;
+        }
+        @keyframes walletShine {
+            0%, 100% { transform: translate(-30%, -30%); }
+            50% { transform: translate(30%, 30%); }
+        }
+        .wallet-title {
+            font-size: 14px;
+            opacity: 0.85;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        .wallet-balance {
+            font-size: 44px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .wallet-balance .star-big {
+            font-size: 38px;
+            filter: drop-shadow(0 0 12px rgba(244, 197, 66, 0.9));
+            animation: starGlow 2s ease-in-out infinite;
+        }
+        .wallet-stats {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        .wallet-stat {
+            text-align: center;
+        }
+        .wallet-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .wallet-stat-label {
+            font-size: 11px;
+            opacity: 0.75;
+            margin-top: 2px;
+        }
+        .wallet-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .wallet-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            backdrop-filter: blur(10px);
+        }
+        .wallet-btn:active { background: rgba(255,255,255,0.35); transform: scale(0.98); }
+        .wallet-btn.primary {
+            background: linear-gradient(135deg, #f4c542, #f39c12);
+            border-color: transparent;
+        }
+        .wallet-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ============ МАГАЗИН ПОДАРКОВ ============ */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            padding: 12px;
+        }
+        .shop-card {
+            background: white;
+            border-radius: 16px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            border: 2px solid transparent;
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+        .shop-card:active { transform: scale(0.96); }
+        .shop-card.common { border-color: #b5b5b5; background: linear-gradient(135deg, #f5f5f5, #ffffff); }
+        .shop-card.rare { border-color: #4a90e2; background: linear-gradient(135deg, #e3f2fd, #ffffff); }
+        .shop-card.epic { border-color: #9b59b6; background: linear-gradient(135deg, #f3e5f5, #ffffff); }
+        .shop-card.legendary { border-color: #f39c12; background: linear-gradient(135deg, #fff8e1, #ffffff); }
+        .shop-card.mythic { border-color: #e53935; background: linear-gradient(135deg, #ffebee, #ffffff); }
+        
+        .shop-card-shape {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .shop-card-name {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--tg-text);
+        }
+        .shop-card-price {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #f4c542, #f39c12);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .shop-card-price .star {
+            font-size: 12px;
+            filter: drop-shadow(0 0 3px rgba(255,255,255,0.6));
+        }
+        .shop-card-rarity {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 6px;
+            letter-spacing: 0.3px;
+        }
+        .shop-card-rarity.common { background: #e0e0e0; color: #555; }
+        .shop-card-rarity.rare { background: #e3f2fd; color: #1976d2; }
+        .shop-card-rarity.epic { background: #f3e5f5; color: #7b1fa2; }
+        .shop-card-rarity.legendary { background: #fff8e1; color: #e65100; }
+        .shop-card-rarity.mythic { background: #ffebee; color: #c62828; }
+
+        /* Просмотр подарка (крупно) */
+        .gift-viewer {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .gift-viewer.show { display: flex; animation: fadeIn 0.3s; }
+        .gift-viewer-content {
+            background: white;
+            border-radius: 24px;
+            padding: 30px 20px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+            position: relative;
+        }
+        .gift-viewer-shape {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+        }
+        .gift-viewer-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .gift-viewer-desc {
+            font-size: 14px;
+            color: var(--tg-text-secondary);
+            margin-bottom: 15px;
+        }
+        .gift-viewer-price {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #f4c542, #f39c12);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+        }
+        .gift-viewer-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* ============ SVG-ФОРМЫ ПОДАРКОВ ============ */
+        .gift-shape {
+            width: 100%;
+            height: 100%;
+            display: block;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+        }
+        .gift-shape-sm { width: 40px; height: 40px; }
+        .gift-shape-md { width: 60px; height: 60px; }
+        .gift-shape-lg { width: 80px; height: 80px; }
+        .gift-shape-xl { width: 150px; height: 150px; }
+
+        /* Анимации для форм */
+        @keyframes shapeBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes shapeSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes shapePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+        }
+        @keyframes shapeShake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
+        @keyframes shapeFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+        @keyframes shapeRainbow {
+            0% { filter: hue-rotate(0deg) drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
+            100% { filter: hue-rotate(360deg) drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
+        }
+        .shape-bounce { animation: shapeBounce 1.8s ease-in-out infinite; }
+        .shape-spin { animation: shapeSpin 6s linear infinite; }
+        .shape-pulse { animation: shapePulse 1.8s ease-in-out infinite; }
+        .shape-shake { animation: shapeShake 1.2s ease-in-out infinite; }
+        .shape-float { animation: shapeFloat 3s ease-in-out infinite; }
+        .shape-rainbow { animation: shapeRainbow 4s linear infinite; }
+
+        /* ============ ТЁМНАЯ ТЕМА ============ */
+        body.dark-theme {
+            --tg-bg: #17212b;
+            --tg-sidebar: #17212b;
+            --tg-sidebar-hover: #202b36;
+            --tg-chat-bg: #0e1621;
+            --tg-text: #ffffff;
+            --tg-text-secondary: #7f91a4;
+            --tg-text-muted: #5e6b78;
+            --tg-message-in: #182533;
+            --tg-message-out: #2b5278;
+            --tg-border: #101921;
+            --tg-hover: #202b36;
+            --tg-header: #17212b;
+            --tg-blue: #5ba3d9;
+        }
+        body.dark-theme .post,
+        body.dark-theme .profile-section,
+        body.dark-theme .profile-header,
+        body.dark-theme .shop-card {
+            background: #182533;
+            color: white;
+        }
+        body.dark-theme .modal-content {
+            background: #17212b;
+            color: white;
+        }
+        body.dark-theme .modal-input,
+        body.dark-theme .comment-input,
+        body.dark-theme .message-input,
+        body.dark-theme .login-input {
+            background: #0e1621;
+            color: white;
+        }
+        body.dark-theme .gift-viewer-content {
+            background: #17212b;
+            color: white;
+        }
+
+        /* Переключатель тёмной темы (в сайдбаре и профиле) */
+        .theme-switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            gap: 15px;
+        }
+        .theme-switch-label {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .theme-switch-label .icon {
+            font-size: 22px;
+            width: 28px;
+            text-align: center;
+        }
+
+        /* ============ ВКЛАДКИ (Все / Новые / Личные) ============ */
+        .chats-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px;
+            background: white;
+            border-bottom: 1px solid var(--tg-border);
+            overflow-x: auto;
+            scrollbar-width: none;
+            flex-shrink: 0;
+        }
+        body.dark-theme .chats-tabs {
+            background: #17212b;
+        }
+        .chats-tabs::-webkit-scrollbar { display: none; }
+        .chats-tab {
+            padding: 6px 14px;
+            background: #f4f4f5;
+            border: none;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--tg-text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.15s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        body.dark-theme .chats-tab { background: #202b36; color: #7f91a4; }
+        .chats-tab.active {
+            background: var(--tg-blue);
+            color: white;
+        }
+        .chats-tab .tab-count {
+            font-size: 11px;
+            opacity: 0.75;
+        }
+        .chats-tab.active .tab-count { opacity: 0.9; }
+
+        /* ============ ВКЛАДКИ ПОИСКА (Чаты / Каналы / Фото...) ============ */
+        .search-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--tg-hover);
+            overflow-x: auto;
+            scrollbar-width: none;
+            flex-shrink: 0;
+        }
+        .search-tabs::-webkit-scrollbar { display: none; }
+        .search-tab {
+            padding: 6px 14px;
+            background: transparent;
+            border: 1px solid var(--tg-border);
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--tg-text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: inherit;
+            transition: 0.15s;
+        }
+        .search-tab.active {
+            background: var(--tg-blue);
+            color: white;
+            border-color: var(--tg-blue);
+        }
+
+        /* ============ ПАПКИ ЧАТОВ ============ */
+        .folders-list {
+            padding: 10px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .folder-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+            border: 1px solid var(--tg-border);
+        }
+        body.dark-theme .folder-item { background: #182533; }
+        .folder-item:active { background: var(--tg-hover); }
+        .folder-item .folder-emoji {
+            font-size: 24px;
+            width: 32px;
+            text-align: center;
+        }
+        .folder-item .folder-info { flex: 1; min-width: 0; }
+        .folder-item .folder-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--tg-text);
+        }
+        .folder-item .folder-count {
+            font-size: 13px;
+            color: var(--tg-text-secondary);
+            margin-top: 2px;
+        }
+
+        /* ============ СТАТИСТИКА ЗВЁЗД ============ */
+        .star-transaction {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--tg-border);
+        }
+        .star-transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f4c542, #f39c12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .star-transaction-info { flex: 1; min-width: 0; }
+        .star-transaction-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--tg-text);
+            margin-bottom: 2px;
+        }
+        .star-transaction-desc {
+            font-size: 12px;
+            color: var(--tg-text-secondary);
+        }
+        .star-transaction-amount {
+            font-size: 16px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .star-transaction-amount.positive { color: #4dcd5e; }
+        .star-transaction-amount.negative { color: #e53935; }
+
+        /* ============ TOP ПОЛЬЗОВАТЕЛЕЙ ============ */
+        .star-top-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--tg-border);
+        }
+        .star-top-rank {
+            width: 28px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--tg-text-secondary);
+            flex-shrink: 0;
+        }
+        .star-top-rank.gold { color: #f39c12; }
+        .star-top-rank.silver { color: #95a5a6; }
+        .star-top-rank.bronze { color: #cd7f32; }
+        .star-top-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--tg-blue), var(--tg-blue-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .star-top-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .star-top-name { flex: 1; font-size: 15px; font-weight: 600; }
+        .star-top-balance {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #f39c12;
+            flex-shrink: 0;
+        }
+
+        /* ============ SVG КОНТЕЙНЕРЫ ============ */
+        .shape-container {
+            display: inline-block;
+            line-height: 0;
+            position: relative;
+        }
+
+        /* Анимированный подарок при получении */
+        .gift-received-anim {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .gift-received-anim.show { display: flex; animation: fadeIn 0.3s; }
+        .gift-received-shape {
+            width: 220px;
+            height: 220px;
+            margin-bottom: 30px;
+            animation: giftReveal 1s ease-out, shapeFloat 3s ease-in-out infinite 1s;
+        }
+        .gift-received-title {
+            color: white;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .gift-received-desc {
+            color: rgba(255,255,255,0.85);
+            font-size: 16px;
+            margin-bottom: 8px;
+            text-align: center;
+            max-width: 300px;
+        }
+        .gift-received-message {
+            color: rgba(255,255,255,0.7);
+            font-size: 15px;
+            font-style: italic;
+            margin-bottom: 25px;
+            text-align: center;
+            max-width: 300px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+        }
+        .gift-received-from {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .gift-received-close {
+            background: linear-gradient(135deg, #f4c542, #f39c12);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.5);
+        }
+        .gift-received-close:active { transform: scale(0.97); }
     </style>
 </head>
 <body>
