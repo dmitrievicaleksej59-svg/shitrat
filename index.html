@@ -2207,16 +2207,23 @@
     }
 
     // ============ ПОДАРКИ ============
-    async function loadMyGifts() {
+    async function loadGiftForms() {
+        if (!token) return;
         try {
-            const res = await fetch(API_URL + '/gifts/my', {
+            const res = await fetch(API_URL + '/gift-forms', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (!res.ok) {
+                giftForms = [];
+                return;
+            }
             const data = await res.json();
-            myGifts = data.userGifts || [];
-        } catch (e) { console.error(e); }
+            giftForms = data.forms || [];
+        } catch (e) {
+            console.error('Ошибка загрузки форм:', e);
+            giftForms = [];
+        }
     }
-
     // ============ СТОРИС ============
     async function loadStories() {
         try {
@@ -2676,15 +2683,19 @@
 
     // ============ КОНТАКТЫ ============
     async function loadContacts() {
+        if (!token) return;
         try {
             const res = await fetch(API_URL + '/contacts', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (!res.ok) {
+                contacts = [];
+                return;
+            }
             const data = await res.json();
             renderContacts(data.contacts || []);
         } catch (e) { console.error(e); }
     }
-
     function renderContacts(contacts) {
         const list = document.getElementById('contactsList');
         if (!list) return;
@@ -2903,25 +2914,39 @@
     }
 
     async function loadUserPosts() {
+        if (!currentUser || !currentUser.id) {
+            userPosts = [];
+            return;
+        }
         try {
             const res = await fetch(API_URL + `/posts/user/${currentUser.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (!res.ok) {
+                userPosts = [];
+                return;
+            }
             const data = await res.json();
             userPosts = data.posts || [];
         } catch (e) { userPosts = []; }
     }
-
     async function loadUserStories() {
+        if (!currentUser || !currentUser.id) {
+            userStories = [];
+            return;
+        }
         try {
             const res = await fetch(API_URL + `/stories/user/${currentUser.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (!res.ok) {
+                userStories = [];
+                return;
+            }
             const data = await res.json();
             userStories = data.stories || [];
         } catch (e) { userStories = []; }
     }
-
     // ============ АВАТАРКА ============
     function changeAvatar() {
         const input = document.createElement('input');
@@ -3599,10 +3624,12 @@
 
     // Загрузить баланс звёзд
     async function loadStars() {
+        if (!token) return;
         try {
             const res = await fetch(API_URL + '/stars/balance', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (!res.ok) return;
             const data = await res.json();
             currentStars = data.stars || 0;
             updateStarsDisplay();
@@ -5081,6 +5108,23 @@
             }
         } catch (e) {
             showToast('Ошибка отправки');
+        }
+    }
+    // ============ МОИ СТАРЫЕ ПОДАРКИ ============
+    async function loadMyGifts() {
+        if (!token) return;
+        try {
+            const res = await fetch(API_URL + '/gifts/my', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) {
+                myGifts = [];
+                return;
+            }
+            const data = await res.json();
+            myGifts = data.userGifts || [];
+        } catch (e) {
+            myGifts = [];
         }
     }
 
