@@ -223,7 +223,6 @@ const UserInterface = mongoose.model('UserInterface', UserInterfaceSchema);
 // ============ ИНИЦИАЛИЗАЦИЯ ============
 async function initializeCreator() {
     try {
-        ...
         const creator = await User.findOne({ username: 'ShitRat_Creator' });
         if (!creator) {
             const hashed = await bcrypt.hash('ShitRat2024!', 12);
@@ -507,7 +506,7 @@ app.post('/api/auth/register', async (req, res) => {
 
         const token = generateToken(user);
         const di = detectDevice(req.headers['user-agent']);
-        await new Session({ user: user._id, ...di, ip: req.ip, token, isCurrent: true }).save();
+      await new Session({ user: user._id, deviceType: di.deviceType, platform: di.platform, browser: di.browser, ip: req.ip, token, isCurrent: true }).save();
 
         res.status(201).json({ token, user: { id: user._id, username: user.username, emoji: user.emoji, avatar: user.avatar, role: user.role, firstName: user.firstName, lastName: user.lastName } });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Ошибка' }); }
@@ -530,7 +529,7 @@ app.post('/api/auth/login', async (req, res) => {
         const token = generateToken(user);
         const di = detectDevice(req.headers['user-agent']);
         await Session.updateMany({ user: user._id }, { isCurrent: false });
-        await new Session({ user: user._id, ...di, ip: req.ip, token, isCurrent: true }).save();
+                await new Session({ user: user._id, deviceType: di.deviceType, platform: di.platform, browser: di.browser, ip: req.ip, token, isCurrent: true }).save();
 
         res.json({ token, user: { id: user._id, username: user.username, emoji: user.emoji, avatar: user.avatar, role: user.role, firstName: user.firstName, lastName: user.lastName, bio: user.bio, phone: user.phone, birthday: user.birthday, privacy: user.privacy, notifications: user.notifications, chatSettings: user.chatSettings } });
     } catch (e) { res.status(500).json({ error: 'Ошибка' }); }
@@ -765,12 +764,13 @@ app.get('/api/posts', authMiddleware, async (req, res) => {
         .populate('likes', 'username')
         .populate('comments.author', 'username emoji avatar')
         .sort({ createdAt: -1 }).limit(50);
-    const result = posts.map(p => ({
-        ...p.toObject(),
-        isLiked: p.likes.some(l => l._id.toString() === req.userId),
-        likesCount: p.likes.length,
-        commentsCount: p.comments.length
-    }));
+        const result = posts.map(p => {
+            const obj = p.toObject();
+            obj.isLiked = p.likes.some(l => l._id.toString() === req.userId);
+            obj.likesCount = p.likes.length;
+            obj.commentsCount = p.comments.length;
+            return obj;
+        });
     res.json({ posts: result });
 });
 
@@ -784,13 +784,13 @@ app.get('/api/posts/user/:userId', authMiddleware, async (req, res) => {
             .populate('likes', 'username')
             .populate('comments.author', 'username emoji avatar')
             .sort({ createdAt: -1 });
-        const result = posts.map(p => ({
-            ...p.toObject(),
-            isLiked: p.likes.some(l => l._id.toString() === req.userId),
-            likesCount: p.likes.length,
-            commentsCount: p.comments.length
-        }));
-        res.json({ posts: result });
+        const result = posts.map(p => {
+            const obj = p.toObject();
+            obj.isLiked = p.likes.some(l => l._id.toString() === req.userId);
+            obj.likesCount = p.likes.length;
+            obj.commentsCount = p.comments.length;
+            return obj;
+        });        res.json({ posts: result });
     } catch (e) {
         console.error('Ошибка постов:', e);
         res.json({ posts: [] });
@@ -803,8 +803,19 @@ app.post('/api/posts', authMiddleware, async (req, res) => {
     const post = new Post({ author: req.userId, content: content || '', image: image || null });
     await post.save();
     const populated = await Post.findById(post._id).populate('author', 'username emoji avatar');
-    res.status(201).json({ post: { ...populated.toObject(), isLiked: false, likesCount: 0, commentsCount: 0 } });
-});
+        res.status(201).json({ post: { 
+            _id: populated._id,
+            author: populated.author,
+            content: populated.content,
+            image: populated.image,
+            likes: populated.likes || [],
+            comments: populated.comments || [],
+            isPublic: populated.isPublic,
+            createdAt: populated.createdAt,
+            isLiked: false, 
+            likesCount: 0, 
+            commentsCount: 0 
+        } });
 
 app.post('/api/posts/:postId/like', authMiddleware, async (req, res) => {
     const post = await Post.findById(req.params.postId);
@@ -1475,11 +1486,11 @@ app.put('/api/interface', authMiddleware, async (req, res) => {
         
         let ui = await UserInterface.findOne({ user: req.userId });
         if (!ui) {
-            ui = new UserInterface({ user: req.userId, ...update });
+            ui = new UserInterface({ user: req.userId });
+            Object.assign(ui, update);
         } else {
             Object.assign(ui, update);
         }
-        
         await ui.save();
         res.json({ interface: ui });
     } catch (e) {
