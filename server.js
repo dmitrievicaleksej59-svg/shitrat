@@ -1101,32 +1101,16 @@ app.get('/api/gift-forms/user/:userId', authMiddleware, async (req, res) => {
             .sort({ purchasedAt: -1 })
             .limit(50);
         const result = received.map(p => ({
-            _id: p._id, form: p.form, message: p.message,
-            purchasedAt: p.purchasedAt, isAnonymous: p.isAnonymous
-        }));
-        res.json({ gifts: result });
-    } catch (e) {
-        console.error('Ошибка подарков:', e);
-        res.json({ gifts: [] });
-    }
-});
-        const received = await GiftPurchase.find({ recipient: req.params.userId })
-            .populate('form')
-            .sort({ purchasedAt: -1 })
-            .limit(50);
-        
-        // Убрать имена отправителей (приватность)
-        const result = received.map(p => ({
             _id: p._id,
             form: p.form,
             message: p.message,
             purchasedAt: p.purchasedAt,
             isAnonymous: p.isAnonymous
         }));
-        
         res.json({ gifts: result });
     } catch (e) {
-        res.status(500).json({ error: 'Ошибка сервера' });
+        console.error('Ошибка подарков:', e);
+        res.json({ gifts: [] });
     }
 });
 
