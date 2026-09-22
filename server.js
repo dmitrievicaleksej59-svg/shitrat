@@ -1,4 +1,3 @@
-
 const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
@@ -224,6 +223,7 @@ const UserInterface = mongoose.model('UserInterface', UserInterfaceSchema);
 // ============ ИНИЦИАЛИЗАЦИЯ ============
 async function initializeCreator() {
     try {
+        ...
         const creator = await User.findOne({ username: 'ShitRat_Creator' });
         if (!creator) {
             const hashed = await bcrypt.hash('ShitRat2024!', 12);
@@ -775,18 +775,26 @@ app.get('/api/posts', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/posts/user/:userId', authMiddleware, async (req, res) => {
-    const posts = await Post.find({ author: req.params.userId })
-        .populate('author', 'username emoji avatar')
-        .populate('likes', 'username')
-        .populate('comments.author', 'username emoji avatar')
-        .sort({ createdAt: -1 });
-    const result = posts.map(p => ({
-        ...p.toObject(),
-        isLiked: p.likes.some(l => l._id.toString() === req.userId),
-        likesCount: p.likes.length,
-        commentsCount: p.comments.length
-    }));
-    res.json({ posts: result });
+    try {
+        if (!req.params.userId || req.params.userId === 'undefined') {
+            return res.json({ posts: [] });
+        }
+        const posts = await Post.find({ author: req.params.userId })
+            .populate('author', 'username emoji avatar')
+            .populate('likes', 'username')
+            .populate('comments.author', 'username emoji avatar')
+            .sort({ createdAt: -1 });
+        const result = posts.map(p => ({
+            ...p.toObject(),
+            isLiked: p.likes.some(l => l._id.toString() === req.userId),
+            likesCount: p.likes.length,
+            commentsCount: p.comments.length
+        }));
+        res.json({ posts: result });
+    } catch (e) {
+        console.error('Ошибка постов:', e);
+        res.json({ posts: [] });
+    }
 });
 
 app.post('/api/posts', authMiddleware, async (req, res) => {
@@ -847,9 +855,18 @@ app.get('/api/stories', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/stories/user/:userId', authMiddleware, async (req, res) => {
-    const stories = await Story.find({ author: req.params.userId })
-        .populate('author', 'username emoji avatar').sort({ createdAt: -1 });
-    res.json({ stories });
+    try {
+        if (!req.params.userId || req.params.userId === 'undefined') {
+            return res.json({ stories: [] });
+        }
+        const stories = await Story.find({ author: req.params.userId })
+            .populate('author', 'username emoji avatar')
+            .sort({ createdAt: -1 });
+        res.json({ stories });
+    } catch (e) {
+        console.error('Ошибка сторис:', e);
+        res.json({ stories: [] });
+    }
 });
 
 app.post('/api/stories', authMiddleware, async (req, res) => {
@@ -1065,6 +1082,23 @@ app.get('/api/gift-forms/received', authMiddleware, async (req, res) => {
 // Получить подарки конкретного пользователя (публично)
 app.get('/api/gift-forms/user/:userId', authMiddleware, async (req, res) => {
     try {
+        if (!req.params.userId || req.params.userId === 'undefined') {
+            return res.json({ gifts: [] });
+        }
+        const received = await GiftPurchase.find({ recipient: req.params.userId })
+            .populate('form')
+            .sort({ purchasedAt: -1 })
+            .limit(50);
+        const result = received.map(p => ({
+            _id: p._id, form: p.form, message: p.message,
+            purchasedAt: p.purchasedAt, isAnonymous: p.isAnonymous
+        }));
+        res.json({ gifts: result });
+    } catch (e) {
+        console.error('Ошибка подарков:', e);
+        res.json({ gifts: [] });
+    }
+});
         const received = await GiftPurchase.find({ recipient: req.params.userId })
             .populate('form')
             .sort({ purchasedAt: -1 })
